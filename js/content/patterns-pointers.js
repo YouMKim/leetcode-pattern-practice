@@ -1,0 +1,188 @@
+// World: Two Pointers & Sliding Window
+
+export const POINTERS_TRICKS = [
+  {
+    id: 'pointers/opposite-ends',
+    name: 'Opposite-ends pointers',
+    when: 'Pair-finding in a SORTED array, or symmetric scans — O(1) space',
+    code: [
+      'l, r = 0, len(arr) - 1',
+      'while {{l < r}}:',
+      '    cur = arr[l] + arr[r]',
+      '    if cur == target:',
+      '        return [l, r]',
+      '    if cur < target:',
+      '        {{l += 1}}       # need a bigger sum',
+      '    else:',
+      '        {{r -= 1}}       # need a smaller sum',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'Sortedness is what justifies the pointer moves — no sort, no trick',
+      'Move the pointer that can only IMPROVE the condition',
+      'For 3sum: fix one element, run this on the rest',
+    ],
+    quiz: [
+      {
+        q: 'When the sum is too small, why is moving l safe?',
+        options: [
+          'r might be wrong',
+          'Every pair (l, x<r) was already ruled out as even smaller',
+          'l is always the answer',
+          'It halves the search space',
+        ],
+        answer: 1,
+        why: 'arr[l]+arr[r] is the LARGEST sum available to l — if it is still too small, l can never pair up.',
+      },
+    ],
+    problems: [
+      { title: 'Two Sum II - Input Array Is Sorted', diff: 'M', slug: 'two-sum-ii-input-array-is-sorted' },
+      { title: 'Container With Most Water', diff: 'M', slug: 'container-with-most-water' },
+      { title: '3Sum', diff: 'M', slug: '3sum' },
+      { title: 'Trapping Rain Water', diff: 'H', slug: 'trapping-rain-water' },
+    ],
+  },
+  {
+    id: 'pointers/fast-slow',
+    name: 'Fast & slow pointers',
+    when: 'Detect a cycle or locate the middle of a linked structure with no extra memory',
+    code: [
+      'slow = fast = head',
+      'while fast and fast.next:',
+      '    slow = {{slow.next}}',
+      '    fast = {{fast.next.next}}',
+      '    if slow is fast:',
+      '        return True        # cycle!',
+      'return False',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'Guard `fast and fast.next` BEFORE double-stepping',
+      'When fast hits the end, slow stands at the middle',
+      'Compare nodes with `is` — identity, not value equality',
+    ],
+    quiz: [
+      {
+        q: 'When fast reaches the end of a list, slow is at…',
+        options: ['the start', 'the middle', 'the end', 'one before fast'],
+        answer: 1,
+        why: 'Half the speed, half the distance — the free middle-finder.',
+      },
+    ],
+    problems: [
+      { title: 'Linked List Cycle', diff: 'E', slug: 'linked-list-cycle' },
+      { title: 'Middle of the Linked List', diff: 'E', slug: 'middle-of-the-linked-list' },
+      { title: 'Palindrome Linked List', diff: 'E', slug: 'palindrome-linked-list' },
+      { title: 'Find the Duplicate Number', diff: 'M', slug: 'find-the-duplicate-number' },
+    ],
+  },
+  {
+    id: 'pointers/fixed-window',
+    name: 'Fixed-size window',
+    when: 'Best window of EXACTLY k elements — maintain a running aggregate',
+    code: [
+      'window = sum(arr[:k])',
+      'best = window',
+      'for i in range(k, len(arr)):',
+      '    window += {{arr[i] - arr[i - k]}}   # add new, drop old',
+      '    best = max(best, window)',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'Never re-sum the window — update incrementally',
+      'arr[i - k] is the element sliding OUT — the off-by-one to check twice',
+      'For counts (anagrams), the aggregate is a Counter updated both ways',
+    ],
+    quiz: [
+      {
+        q: 'Recomputing the window sum at every position costs…',
+        options: ['O(n)', 'O(n·k)', 'O(k)', 'O(n log k)'],
+        answer: 1,
+        why: 'n positions × O(k) sums — the incremental update removes the k.',
+      },
+    ],
+    problems: [
+      { title: 'Maximum Average Subarray I', diff: 'E', slug: 'maximum-average-subarray-i' },
+      { title: 'Permutation in String', diff: 'M', slug: 'permutation-in-string' },
+      { title: 'Find All Anagrams in a String', diff: 'M', slug: 'find-all-anagrams-in-a-string' },
+      { title: 'Sliding Window Maximum', diff: 'H', slug: 'sliding-window-maximum' },
+    ],
+  },
+  {
+    id: 'pointers/variable-window',
+    name: 'Shrinking (variable) window',
+    when: 'Longest/shortest subarray satisfying a constraint you can maintain incrementally',
+    code: [
+      'left = 0',
+      'for right, x in enumerate(s):',
+      '    add(x)                     # extend right edge',
+      '    while {{invalid()}}:        # shrink until valid',
+      '        remove(s[left])',
+      '        {{left += 1}}',
+      '    best = max(best, {{right - left + 1}})',
+    ],
+    bigO: { time: 'O(n) — each pointer advances at most n times', space: 'O(window alphabet)' },
+    gotchas: [
+      'Use WHILE (not if) to shrink — one step may not restore validity',
+      'For shortest-window problems, record the answer INSIDE the shrink loop',
+      'The window state must be cheap to update on both add and remove',
+    ],
+    quiz: [
+      {
+        q: 'Why is this O(n) and not O(n²)?',
+        options: [
+          'The while loop rarely runs',
+          'left and right each move forward at most n times total',
+          'Python optimizes nested loops',
+          'It is O(n²) worst case',
+        ],
+        answer: 1,
+        why: 'Amortized analysis: both pointers only move forward — 2n moves max.',
+      },
+    ],
+    problems: [
+      { title: 'Longest Substring Without Repeating Characters', diff: 'M', slug: 'longest-substring-without-repeating-characters' },
+      { title: 'Longest Repeating Character Replacement', diff: 'M', slug: 'longest-repeating-character-replacement' },
+      { title: 'Minimum Size Subarray Sum', diff: 'M', slug: 'minimum-size-subarray-sum' },
+      { title: 'Minimum Window Substring', diff: 'H', slug: 'minimum-window-substring' },
+    ],
+  },
+  {
+    id: 'pointers/writer',
+    name: 'Reader/writer compaction',
+    when: 'Filter or dedupe an array IN PLACE — one pointer reads, one writes',
+    code: [
+      'write = 0',
+      'for read in range(len(nums)):',
+      '    if keep(nums[read]):',
+      '        nums[{{write}}] = nums[read]',
+      '        {{write += 1}}',
+      'return write               # the new logical length',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'write ≤ read always — you can never clobber unread data',
+      'Everything past `write` is garbage by contract — that is allowed',
+      'Dedupe-sorted variant: keep when nums[read] != nums[write-1]',
+    ],
+    quiz: [
+      {
+        q: 'Why is overwriting nums[write] always safe?',
+        options: [
+          'The array is sorted',
+          'write never passes read, so that slot was already read',
+          'Python copies on write',
+          'It is not — you need a buffer',
+        ],
+        answer: 1,
+        why: 'The writer trails the reader by construction.',
+      },
+    ],
+    problems: [
+      { title: 'Remove Duplicates from Sorted Array', diff: 'E', slug: 'remove-duplicates-from-sorted-array' },
+      { title: 'Move Zeroes', diff: 'E', slug: 'move-zeroes' },
+      { title: 'Remove Element', diff: 'E', slug: 'remove-element' },
+      { title: 'Sort Colors', diff: 'M', slug: 'sort-colors' },
+    ],
+  },
+];

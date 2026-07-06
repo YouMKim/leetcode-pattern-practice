@@ -1,0 +1,186 @@
+// World: Backtracking
+
+export const BACKTRACKING_TRICKS = [
+  {
+    id: 'backtracking/template',
+    name: 'Choose / explore / un-choose',
+    when: 'Enumerate all valid combinations by building candidates piece by piece and undoing',
+    code: [
+      'def backtrack(path, choices):',
+      '    if {{is_solution(path)}}:',
+      '        res.append({{path[:]}})      # append a COPY',
+      '        return',
+      '    for c in choices:',
+      '        path.append(c)              # choose',
+      '        backtrack(path, remaining)  # explore',
+      '        {{path.pop()}}               # un-choose',
+    ],
+    bigO: { time: 'O(branches^depth) — output-dominated', space: 'O(depth)' },
+    gotchas: [
+      'Append path[:] — the shared list keeps mutating after you record it',
+      'Un-choose must EXACTLY mirror choose (append↔pop, add↔remove)',
+      'Pruning impossible branches before recursing is the entire speedup game',
+    ],
+    quiz: [
+      {
+        q: 'Why res.append(path[:]) instead of res.append(path)?',
+        options: [
+          'Slicing is faster',
+          'path keeps mutating — you would store n references to one dying list',
+          'It sorts the result',
+          'To force garbage collection',
+        ],
+        answer: 1,
+        why: 'Every recorded answer would end up as the same (finally empty) list.',
+      },
+    ],
+    problems: [
+      { title: 'Subsets', diff: 'M', slug: 'subsets' },
+      { title: 'Permutations', diff: 'M', slug: 'permutations' },
+      { title: 'Combination Sum', diff: 'M', slug: 'combination-sum' },
+      { title: 'N-Queens', diff: 'H', slug: 'n-queens' },
+    ],
+  },
+  {
+    id: 'backtracking/subsets',
+    name: 'Subsets: include / exclude',
+    when: 'Generate the power set — treat every element as one yes/no decision',
+    code: [
+      'def backtrack(i, path):',
+      '    if i == len(nums):',
+      '        res.append(path[:])',
+      '        return',
+      '    backtrack({{i + 1}}, path)       # EXCLUDE nums[i]',
+      '    path.append(nums[i])            # INCLUDE nums[i]',
+      '    backtrack(i + 1, path)',
+      '    {{path.pop()}}',
+    ],
+    bigO: { time: 'O(2ⁿ · n)', space: 'O(n) recursion depth' },
+    gotchas: [
+      '2ⁿ subsets exist — the output itself is exponential, no algorithm beats that',
+      'The decision tree is binary: two recursive calls, one per choice',
+    ],
+    quiz: [
+      {
+        q: 'How many subsets does a 10-element set have?',
+        options: ['100', '1024', '3,628,800', '10'],
+        answer: 1,
+        why: '2¹⁰ — one yes/no bit per element.',
+      },
+    ],
+    problems: [
+      { title: 'Subsets', diff: 'M', slug: 'subsets' },
+      { title: 'Subsets II', diff: 'M', slug: 'subsets-ii' },
+      { title: 'Letter Combinations of a Phone Number', diff: 'M', slug: 'letter-combinations-of-a-phone-number' },
+    ],
+  },
+  {
+    id: 'backtracking/permutations',
+    name: 'Permutations with a used-set',
+    when: 'Every ORDERING matters — arrangements rather than selections',
+    code: [
+      'def backtrack(path):',
+      '    if len(path) == len(nums):',
+      '        res.append(path[:])',
+      '        return',
+      '    for x in nums:',
+      '        if x {{in used}}:',
+      '            continue',
+      '        used.add(x)',
+      '        path.append(x)',
+      '        backtrack(path)',
+      '        path.pop()',
+      '        {{used.remove(x)}}',
+    ],
+    bigO: { time: 'O(n! · n)', space: 'O(n)' },
+    gotchas: [
+      'n! explodes: 10! ≈ 3.6 million — feasibility check before you code',
+      'The swap-in-place variant avoids the used-set entirely',
+      'used.remove must mirror used.add — half an undo corrupts every later branch',
+    ],
+    quiz: [
+      {
+        q: 'How many permutations of 4 distinct items?',
+        options: ['16', '24', '64', '256'],
+        answer: 1,
+        why: '4! = 4·3·2·1.',
+      },
+    ],
+    problems: [
+      { title: 'Permutations', diff: 'M', slug: 'permutations' },
+      { title: 'Permutations II', diff: 'M', slug: 'permutations-ii' },
+      { title: 'N-Queens', diff: 'H', slug: 'n-queens' },
+    ],
+  },
+  {
+    id: 'backtracking/start-index',
+    name: 'Combinations via start index',
+    when: 'Selections where order does NOT matter — never revisit earlier elements',
+    code: [
+      'def backtrack(start, path):',
+      '    res.append(path[:])            # or: only when len(path) == k',
+      '    for i in range({{start}}, len(nums)):',
+      '        path.append(nums[i])',
+      '        backtrack({{i + 1}}, path)   # only look FORWARD',
+      '        path.pop()',
+    ],
+    bigO: { time: 'O(2ⁿ) subsets-shaped', space: 'O(n)' },
+    gotchas: [
+      'The start index is what stops [2,1] appearing after [1,2]',
+      'Element reuse allowed (Combination Sum): recurse with i, NOT i+1',
+    ],
+    quiz: [
+      {
+        q: 'In Combination Sum (reuse allowed), the recursive call passes…',
+        options: ['start', 'i', 'i + 1', '0'],
+        answer: 1,
+        why: 'i lets the SAME element be picked again; i+1 forbids it; 0 would break ordering.',
+      },
+    ],
+    problems: [
+      { title: 'Combinations', diff: 'M', slug: 'combinations' },
+      { title: 'Combination Sum', diff: 'M', slug: 'combination-sum' },
+      { title: 'Combination Sum II', diff: 'M', slug: 'combination-sum-ii' },
+      { title: 'Palindrome Partitioning', diff: 'M', slug: 'palindrome-partitioning' },
+    ],
+  },
+  {
+    id: 'backtracking/dedupe',
+    name: 'Sort + skip duplicates',
+    when: 'Input has duplicates but each output may appear only once — prune, never post-filter',
+    code: [
+      'nums.sort()                          # duplicates now adjacent',
+      'for i in range(start, len(nums)):',
+      '    if i > start and nums[i] {{== nums[i - 1]}}:',
+      '        {{continue}}                   # skip the duplicate BRANCH',
+      '    path.append(nums[i])',
+      '    backtrack(i + 1, path)',
+      '    path.pop()',
+    ],
+    bigO: { time: 'prunes whole duplicate subtrees', space: 'O(n)' },
+    gotchas: [
+      'i > start, NOT i > 0 — skip dupes at the same DEPTH but allow them stacked in one path',
+      'Requires sorted input — the skip test only sees neighbors',
+      'Post-filtering with a set of tuples works but wastes exponential work',
+    ],
+    quiz: [
+      {
+        q: 'Why i > start instead of i > 0?',
+        options: [
+          'Either works',
+          'i > 0 would also forbid using equal values at DIFFERENT depths (e.g. [1,1])',
+          'start is always 0',
+          'To avoid IndexError',
+        ],
+        answer: 1,
+        why: '[1,1,2] must still produce [1,1] — only sibling duplicates get skipped.',
+      },
+    ],
+    problems: [
+      { title: 'Subsets II', diff: 'M', slug: 'subsets-ii' },
+      { title: 'Combination Sum II', diff: 'M', slug: 'combination-sum-ii' },
+      { title: 'Permutations II', diff: 'M', slug: 'permutations-ii' },
+      { title: '3Sum', diff: 'M', slug: '3sum' },
+    ],
+  },
+];

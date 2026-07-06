@@ -1,0 +1,174 @@
+// World: Stack & Deque tricks (Python toolbelt)
+
+export const STACK_TRICKS = [
+  {
+    id: 'stack/list-stack',
+    name: 'List as a stack',
+    when: 'LIFO processing: undo history, nested structure, DFS without recursion',
+    code: [
+      'stack = []',
+      'stack{{.append(x)}}      # push',
+      'top = stack{{[-1]}}       # peek',
+      'x = stack{{.pop()}}       # pop from the END only',
+      'if stack:                # truthiness = non-empty',
+      '    ...',
+    ],
+    bigO: { time: 'O(1) push / pop / peek', space: 'O(n)' },
+    gotchas: [
+      'pop(0) is O(n) — front-popping needs a deque',
+      'pop() on an empty list raises — guard with `if stack:`',
+    ],
+    quiz: [
+      {
+        q: 'list.pop(0) costs…',
+        options: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)'],
+        answer: 2,
+        why: 'Every remaining element shifts left by one.',
+      },
+    ],
+    problems: [
+      { title: 'Valid Parentheses', diff: 'E', slug: 'valid-parentheses' },
+      { title: 'Min Stack', diff: 'M', slug: 'min-stack' },
+      { title: 'Evaluate Reverse Polish Notation', diff: 'M', slug: 'evaluate-reverse-polish-notation' },
+    ],
+  },
+  {
+    id: 'stack/paren-match',
+    name: 'Matched pairs (close→open map)',
+    when: 'Validate nested brackets of several kinds in one pass',
+    code: [
+      'pairs = {")": "(", "]": "[", "}": "{"}',
+      'stack = []',
+      'for ch in s:',
+      '    if ch in pairs:',
+      '        if not stack or stack.pop() != {{pairs[ch]}}:',
+      '            return False',
+      '    else:',
+      '        stack.append({{ch}})',
+      'return {{not stack}}',
+    ],
+    bigO: { time: 'O(n)', space: 'O(n)' },
+    gotchas: [
+      'Return `not stack` — leftover items mean unclosed openers',
+      'Keying the map by CLOSERS makes the branch trivial',
+    ],
+    quiz: [
+      {
+        q: 'Why `return not stack` instead of `return True`?',
+        options: [
+          'Style preference',
+          '"(((" would wrongly pass otherwise',
+          'pop() needs it',
+          'It short-circuits faster',
+        ],
+        answer: 1,
+        why: 'A string of unclosed openers never fails inside the loop — only the final emptiness check catches it.',
+      },
+    ],
+    problems: [
+      { title: 'Valid Parentheses', diff: 'E', slug: 'valid-parentheses' },
+      { title: 'Minimum Remove to Make Valid Parentheses', diff: 'M', slug: 'minimum-remove-to-make-valid-parentheses' },
+      { title: 'Longest Valid Parentheses', diff: 'H', slug: 'longest-valid-parentheses' },
+    ],
+  },
+  {
+    id: 'stack/monotonic',
+    name: 'Monotonic stack',
+    when: 'For each element, find the next greater/smaller element — in linear time',
+    code: [
+      'res = [0] * len(nums)',
+      'stack = []                    # indices; values kept decreasing',
+      'for i, x in enumerate(nums):',
+      '    while stack and nums[stack[-1]] {{< x}}:',
+      '        j = stack{{.pop()}}',
+      '        res[j] = i - j        # or x — per problem',
+      '    stack.append({{i}})',
+    ],
+    bigO: { time: 'O(n) — each index pushed and popped once', space: 'O(n)' },
+    gotchas: [
+      'Store INDICES — you almost always need positions or distances',
+      'Flip the comparison for next-smaller / previous-greater variants',
+      'It is amortized O(n): total pops can never exceed total pushes',
+    ],
+    quiz: [
+      {
+        q: 'Across the entire loop, total pops are at most…',
+        options: ['n', 'n log n', 'n²', '2ⁿ'],
+        answer: 0,
+        why: 'Each index is pushed once, so it can be popped at most once — that is the amortized argument.',
+      },
+    ],
+    problems: [
+      { title: 'Daily Temperatures', diff: 'M', slug: 'daily-temperatures' },
+      { title: 'Next Greater Element I', diff: 'E', slug: 'next-greater-element-i' },
+      { title: 'Car Fleet', diff: 'M', slug: 'car-fleet' },
+      { title: 'Largest Rectangle in Histogram', diff: 'H', slug: 'largest-rectangle-in-histogram' },
+    ],
+  },
+  {
+    id: 'stack/deque',
+    name: 'deque: O(1) at both ends',
+    when: 'A FIFO queue (BFS!) or anything that pops from the front',
+    code: [
+      'from collections import deque',
+      'q = {{deque([start])}}',
+      'q.append(x)               # right end',
+      'first = q{{.popleft()}}    # left end, O(1)',
+      'q.appendleft(x)',
+    ],
+    bigO: { time: 'O(1) at both ends', space: 'O(n)' },
+    gotchas: [
+      'list.pop(0) inside BFS is the classic hidden O(n²)',
+      'Indexing q[i] is O(n) — a deque is not a list',
+    ],
+    quiz: [
+      {
+        q: 'Best structure for a FIFO queue in Python?',
+        options: ['list', 'collections.deque', 'heapq', 'set'],
+        answer: 1,
+        why: 'deque gives O(1) popleft; a list shifts everything.',
+      },
+    ],
+    problems: [
+      { title: 'Binary Tree Level Order Traversal', diff: 'M', slug: 'binary-tree-level-order-traversal' },
+      { title: 'Rotting Oranges', diff: 'M', slug: 'rotting-oranges' },
+      { title: 'Number of Recent Calls', diff: 'E', slug: 'number-of-recent-calls' },
+    ],
+  },
+  {
+    id: 'stack/min-stack',
+    name: 'Min-stack (snapshot the min)',
+    when: 'A stack that also answers "current minimum" in O(1) at any moment',
+    code: [
+      'stack = []                          # entries: (value, min_so_far)',
+      'def push(x):',
+      '    cur_min = min(x, stack[-1][1]) if stack else x',
+      '    stack.append({{(x, cur_min)}})',
+      'def get_min():',
+      '    return stack[-1]{{[1]}}',
+    ],
+    bigO: { time: 'O(1) all operations', space: 'O(n)' },
+    gotchas: [
+      'Snapshot the min WITH each entry — popping restores the old min for free',
+      'The same idea gives a max-stack, or "stack with any running aggregate"',
+    ],
+    quiz: [
+      {
+        q: 'Why store the min alongside every entry?',
+        options: [
+          'To sort faster',
+          'So pop() automatically restores the previous min',
+          'To save memory',
+          'Python requires tuples in stacks',
+        ],
+        answer: 1,
+        why: 'A single min variable breaks on pop — per-entry snapshots never do.',
+      },
+    ],
+    problems: [
+      { title: 'Min Stack', diff: 'M', slug: 'min-stack' },
+      { title: 'Online Stock Span', diff: 'M', slug: 'online-stock-span' },
+      { title: 'Maximum Frequency Stack', diff: 'H', slug: 'maximum-frequency-stack' },
+    ],
+  },
+];
