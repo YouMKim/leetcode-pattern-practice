@@ -7,3 +7,7 @@
 
 export const SUPABASE_URL = 'https://xkgnqnviaoysmicqywkf.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable__fxmUrOO01WPCQVzLhsTQA_d4NrQSCI';
+
+// OAuth providers enabled in the Supabase dashboard. Add 'github' here once
+// its OAuth app is configured (Authentication → Sign In / Providers).
+export const AUTH_PROVIDERS = ['google'];

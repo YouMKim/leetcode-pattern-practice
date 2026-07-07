@@ -2,6 +2,16 @@
 
 import { loadSave, persist, resetSave, exportSave, importSave } from './state.js';
 import { cloudConfigured, cloudState, onCloudChange, initCloud, signIn, signOut, schedulePush } from './cloud.js';
+import { AUTH_PROVIDERS } from './supabase-config.js';
+
+const PROVIDER_NAMES = { google: 'Google', github: 'GitHub' };
+
+function wireProviderButtons() {
+  for (const p of AUTH_PROVIDERS) {
+    const btn = document.getElementById(`btn-${p}`);
+    if (btn) btn.addEventListener('click', () => signIn(p));
+  }
+}
 import { WORLDS, ALL_TRICKS, trickById } from './content/index.js';
 import { newCard, review, RATING, RATING_NAMES, formatMs, previewIntervals } from './engine/fsrs.js';
 import { renderPlanAll, blanks, grade as gradeCloze, gradeFull, templateLines } from './engine/cloze.js';
@@ -75,13 +85,11 @@ function renderAuthGate() {
       <div class="hero-sub">every trick in the book — burned into memory with spaced repetition</div>
       <div class="gate-box">
         <div class="gate-pitch">Sign in and your progress — every card, streak and stat — follows you to any device.</div>
-        <button class="btn primary big gate-btn" id="btn-google" ${busy ? 'disabled' : ''}>Continue with Google</button>
-        <button class="btn primary big gate-btn" id="btn-github" ${busy ? 'disabled' : ''}>Continue with GitHub</button>
+        ${AUTH_PROVIDERS.map((p) => `<button class="btn primary big gate-btn" id="btn-${p}" ${busy ? 'disabled' : ''}>Continue with ${PROVIDER_NAMES[p] || p}</button>`).join('')}
         <a href="#" id="btn-guest" class="gate-guest">continue as guest — progress stays on this device only</a>
       </div>
     </div>`;
-  document.getElementById('btn-google').addEventListener('click', () => signIn('google'));
-  document.getElementById('btn-github').addEventListener('click', () => signIn('github'));
+  wireProviderButtons();
   document.getElementById('btn-guest').addEventListener('click', (e) => {
     e.preventDefault();
     try { localStorage.setItem(GUEST_KEY, '1'); } catch { /* still navigable */ }
@@ -164,8 +172,7 @@ function renderHome() {
       cloudHtml = `<div class="cloud-bar">${badge} ${esc(cs.email)} · <a href="#" id="btn-signout">sign out</a></div>`;
     } else {
       cloudHtml = `<div class="cloud-bar">Sync across devices:
-        <button class="btn" id="btn-google">Sign in with Google</button>
-        <button class="btn" id="btn-github">Sign in with GitHub</button></div>`;
+        ${AUTH_PROVIDERS.map((p) => `<button class="btn" id="btn-${p}">Sign in with ${PROVIDER_NAMES[p] || p}</button>`).join(' ')}</div>`;
     }
   }
 
@@ -208,10 +215,7 @@ function renderHome() {
     e.preventDefault();
     if (confirm('Wipe all Grimoire progress?')) { resetSave(); save = loadSave(); syncSave(); route(); }
   });
-  const btnGoogle = document.getElementById('btn-google');
-  if (btnGoogle) btnGoogle.addEventListener('click', () => signIn('google'));
-  const btnGithub = document.getElementById('btn-github');
-  if (btnGithub) btnGithub.addEventListener('click', () => signIn('github'));
+  wireProviderButtons();
   const btnSignout = document.getElementById('btn-signout');
   if (btnSignout) btnSignout.addEventListener('click', (e) => { e.preventDefault(); signOut().then(route); });
 
