@@ -2,7 +2,7 @@
 
 A browser game that burns **every useful LeetCode trick** into your memory with real spaced repetition — the sequel to [terminal-skills-game](https://github.com/YouMKim/terminal-skills-game).
 
-**114 tricks · 19 worlds · 5 exercise types · FSRS scheduling · ~380 curated problem links.** All Python, all offline, zero dependencies. The trick taxonomy is cross-checked against the standard pattern lists (the "41 patterns" guides, [seanprashad.com/leetcode-patterns](https://seanprashad.com/leetcode-patterns/), Grokking-style pattern courses).
+**119 tricks · 20 worlds · 5 exercise types · FSRS scheduling · ~400 curated problem links.** All Python, all offline, zero dependencies. The trick taxonomy is cross-checked against the standard pattern lists (the "41 patterns" guides, [seanprashad.com/leetcode-patterns](https://seanprashad.com/leetcode-patterns/), Grokking-style pattern courses).
 
 ## How it works
 
@@ -14,7 +14,8 @@ A browser game that burns **every useful LeetCode trick** into your memory with 
    - 🔥 **Type the whole template** — a blank editor; reproduce the entire snippet from memory (indentation/comments forgiven, content and order graded line by line)
    - ❓ **Quiz** — Big-O and gotcha questions
    - 🔍 **Which trick?** — a problem cue → pick the right pattern (the real interview meta-skill)
-4. Grading is **objective**, not self-reported: clean & fast = Easy, clean = Good, needed a retry/hint = Hard, missed = Again (and the card comes back at the end of the session).
+4. **Muscle memory is the point**: every OTHER review is a full template type-out (50% of all reps), and 🔥 **Drill modes** let you hammer any single template — or a whole world back-to-back — ungraded, as many times as you want.
+5. Grading is **objective**, not self-reported: clean & fast = Easy, clean = Good, needed a retry/hint = Hard, missed = Again (and the card comes back at the end of the session).
 
 Progress lives in localStorage (with JSON export/import for backup). Problem checkboxes track which linked LeetCode problems you've actually solved.
 
@@ -36,6 +37,7 @@ Progress lives in localStorage (with JSON export/import for backup). Problem che
 | 🤏 Two Pointers & Windows | opposite ends · fast/slow · fixed window · shrinking window · reader/writer · Dutch flag |
 | 🎯 Binary Search | classic · leftmost · **search on the answer** · rotated arrays · bisect · flat-2D indexing |
 | 🌳 Trees: DFS & BFS | recursive DFS · **iterative DFS** · BFS levels · grid flood fill · BST bounds · LCA |
+| 🔁 Recursive ⇄ Iterative | **inorder left-spine stack** · postorder via reversed preorder · the (node, expanded) frames recipe · graph DFS both ways · stack⇄queue flips DFS⇄BFS |
 | 🕸️ Graphs | adjacency · BFS shortest path · **union-find** · toposort · Dijkstra · multi-source BFS · clone-with-map |
 | 🔙 Backtracking | choose/explore/un-choose · subsets · permutations · start-index · sort+skip dedupe · N-queens sets |
 | 🧮 Dynamic Programming | @cache · rolling 1-D · 2-D grid · knapsack loop order · LIS n log n · state machine · min-coins |

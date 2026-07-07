@@ -32,6 +32,7 @@ function route() {
   if (screen === 'world') return renderWorld(a);
   if (screen === 'trick') return renderTrick(a, parseInt(b, 10));
   if (screen === 'review') return renderReview();
+  if (screen === 'drill') return renderDrill(a);
   if (screen === 'stats') return renderStats();
   renderHome();
 }
@@ -180,13 +181,88 @@ function renderWorld(wid) {
 
   app.innerHTML = `<div class="screen">
     ${topbar('', `${world.icon} ${esc(world.name)}`, `${s.learned}/${s.total}`)}
+    <div class="drill-cta"><button class="btn" id="btn-drill">🔥 Drill this world — type every template from memory (no grading)</button></div>
     <div class="trick-list">${rows.join('')}</div>
   </div>`;
   wireTopbar('');
+  document.getElementById('btn-drill').addEventListener('click', () => (location.hash = `drill/${wid}`));
   for (const row of app.querySelectorAll('.trick-row')) {
     row.addEventListener('click', () => (location.hash = `trick/${wid}/${row.dataset.idx}`));
   }
   ctrl = null;
+}
+
+// --- drill mode: type-only, ungraded, repeat at will --------------------------------
+
+function renderDrill(wid) {
+  const world = WORLDS.find((w) => w.id === wid);
+  if (!world) { location.hash = ''; return; }
+  const queue = world.tricks.slice();
+  let clean = 0;
+  let done = 0;
+
+  app.innerHTML = `<div class="screen">
+    ${topbar(`world/${wid}`, `🔥 Drill: ${world.icon} ${esc(world.name)}`, `<span id="drill-count"></span>`)}
+    <div class="session" id="session"></div>
+  </div>`;
+  wireTopbar(`world/${wid}`);
+
+  const step = () => {
+    const counter = document.getElementById('drill-count');
+    if (counter) counter.textContent = `${done}/${world.tricks.length}`;
+    if (!queue.length) {
+      document.getElementById('session').innerHTML = `
+        <div class="summary">
+          <div class="summary-title">Drill complete 💪</div>
+          <div class="summary-row">${clean}/${world.tricks.length} templates typed clean, first try</div>
+          <div class="ex-actions">
+            <button class="btn primary" id="btn-redrill">Drill again <kbd>⏎</kbd></button>
+            <button class="btn" id="btn-back-world">Back to world</button>
+          </div>
+        </div>`;
+      document.getElementById('btn-redrill').addEventListener('click', () => renderDrill(wid));
+      document.getElementById('btn-back-world').addEventListener('click', () => (location.hash = `world/${wid}`));
+      ctrl = { key(e) { if (e.key === 'Enter') { renderDrill(wid); return true; } return false; } };
+      return;
+    }
+    const trick = queue.shift();
+    runExercise(document.getElementById('session'), trick, 'type', { reps: 1 }, (outcome) => {
+      const ok = !outcome.wrong && !outcome.hints && !outcome.revealed;
+      if (ok) clean += 1;
+      done += 1;
+      const container = document.getElementById('session');
+      container.innerHTML = `
+        <div class="reveal">
+          <div class="verdict ${ok ? 'r-good' : 'r-again'}">${ok ? '✓ Clean' : '✗ Study it — then it comes around again next drill'}</div>
+          <div class="reveal-name">${esc(trick.name)}</div>
+          ${renderTrickCard(trick, save, { showProblems: false })}
+          <div class="ex-actions"><button class="btn primary" id="btn-next">Next <kbd>⏎</kbd></button></div>
+        </div>`;
+      container.querySelector('#btn-next').addEventListener('click', step);
+      ctrl = { key(e) { if (e.key === 'Enter') { step(); return true; } return false; } };
+    });
+  };
+  step();
+}
+
+// Inline single-trick drill loop on the trick view: drill → result → Enter → again.
+function drillOnce(trick, wid, idx) {
+  const container = document.getElementById('trick-view');
+  runExercise(container, trick, 'type', { reps: 1 }, (outcome) => {
+    const ok = !outcome.wrong && !outcome.hints && !outcome.revealed;
+    container.innerHTML = `
+      <div class="reveal">
+        <div class="verdict ${ok ? 'r-good' : 'r-again'}">${ok ? '✓ Nailed it' : '✗ Keep drilling'} — ungraded, repeat until it’s automatic</div>
+        ${renderTrickCard(trick, save, { showProblems: false })}
+        <div class="ex-actions">
+          <button class="btn primary" id="btn-again">Drill again <kbd>⏎</kbd></button>
+          <button class="btn" id="btn-done">Done</button>
+        </div>
+      </div>`;
+    container.querySelector('#btn-again').addEventListener('click', () => drillOnce(trick, wid, idx));
+    container.querySelector('#btn-done').addEventListener('click', () => renderTrick(wid, idx));
+    ctrl = { key(e) { if (e.key === 'Enter') { drillOnce(trick, wid, idx); return true; } if (e.key === 'Escape') { renderTrick(wid, idx); return true; } return false; } };
+  });
 }
 
 // --- trick reference / learn ----------------------------------------------------------
@@ -213,11 +289,14 @@ function renderTrick(wid, idx) {
     ${topbar(`world/${wid}`, `${world.icon} ${esc(trick.name)}`)}
     <div class="trick-view" id="trick-view">
       ${renderTrickCard(trick, save)}
-      <div class="learn-cta">${statusHtml}</div>
+      <div class="learn-cta">${statusHtml}
+        <button class="btn" id="btn-trick-drill">🔥 Drill: type it from memory (ungraded)</button>
+      </div>
     </div>
   </div>`;
   wireTopbar(`world/${wid}`);
   wireProblemChecks(() => renderTrick(wid, idx));
+  document.getElementById('btn-trick-drill').addEventListener('click', () => drillOnce(trick, wid, idx));
 
   const startPractice = () => runSingleCard(trick, { backHash: `trick/${wid}/${idx}`, worldHash: `world/${wid}` });
   const btn = document.getElementById('btn-learn');

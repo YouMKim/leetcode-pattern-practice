@@ -31,9 +31,12 @@ export function exerciseTypes(trick) {
   return types;
 }
 
+// Muscle-memory weighting: every ODD rep is a full-template type-out;
+// even reps rotate through the recognition/recall exercises.
 export function pickExercise(trick, card) {
-  const types = exerciseTypes(trick);
-  return types[card.reps % types.length];
+  if (card.reps % 2 === 1) return 'type';
+  const others = exerciseTypes(trick).filter((t) => t !== 'type');
+  return others[(card.reps / 2) % others.length];
 }
 
 // Build a pattern-match MCQ: prompt is the trick's when-to-use line; options

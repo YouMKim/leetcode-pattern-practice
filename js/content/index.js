@@ -14,6 +14,7 @@ import { BACKTRACKING_TRICKS } from './patterns-backtracking.js';
 import { DP_TRICKS } from './patterns-dp.js';
 import { GREEDY_TRICKS } from './patterns-greedy.js';
 import { LINKEDLIST_TRICKS } from './patterns-linkedlist.js';
+import { RECIT_TRICKS } from './patterns-recit.js';
 import { TRIES_TRICKS } from './patterns-tries.js';
 import { MATRIX_TRICKS } from './patterns-matrix.js';
 import { MATH_TRICKS } from './vault-math.js';
@@ -32,6 +33,7 @@ export const WORLDS = [
   { id: 'pointers', name: 'Two Pointers & Windows', icon: '🤏', group: 'The Patterns', tricks: POINTERS_TRICKS },
   { id: 'binsearch', name: 'Binary Search', icon: '🎯', group: 'The Patterns', tricks: BINSEARCH_TRICKS },
   { id: 'trees', name: 'Trees: DFS & BFS', icon: '🌳', group: 'The Patterns', tricks: TREES_TRICKS },
+  { id: 'recit', name: 'Recursive ⇄ Iterative', icon: '🔁', group: 'The Patterns', tricks: RECIT_TRICKS },
   { id: 'graphs', name: 'Graphs', icon: '🕸️', group: 'The Patterns', tricks: GRAPHS_TRICKS },
   { id: 'backtracking', name: 'Backtracking', icon: '🔙', group: 'The Patterns', tricks: BACKTRACKING_TRICKS },
   { id: 'dp', name: 'Dynamic Programming', icon: '🧮', group: 'The Patterns', tricks: DP_TRICKS },

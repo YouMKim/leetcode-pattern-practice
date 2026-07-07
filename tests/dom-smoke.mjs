@@ -105,7 +105,7 @@ const { trickById } = await import('../js/content/index.js');
 await import('../js/main.js');
 
 ok(appEl.innerHTML.includes('LEETCODE GRIMOIRE'), 'home renders title');
-ok(appEl.querySelectorAll('.world-card').length === 19, 'home shows 19 worlds');
+ok(appEl.querySelectorAll('.world-card').length === 20, 'home shows 20 worlds');
 
 // --- learn flow: heap/max-heap ----------------------------------------------------
 
@@ -180,16 +180,16 @@ ok(appEl.innerHTML.includes('Nothing due') || appEl.innerHTML.includes('ex-head'
 // --- fresh import with a doctored save: full session walkthrough ---------------------
 
 {
-  // Build a save where three tricks are due NOW with chosen rep counts:
-  // rotation is [cloze, parsons, type, quiz, match] → reps 3 = quiz,
-  // reps 5 = cloze, reps 2 = full-type.
+  // Build a save where three tricks are due NOW with chosen rep counts.
+  // Rotation: odd reps = type; even reps cycle [cloze, parsons, quiz, match]
+  // → reps 4 = quiz, reps 8 = cloze, reps 3 = full-type.
   const now = Date.now();
   const doctored = {
     version: 1,
     cards: {
-      'dp/memoization': { state: 'review', S: 4, D: 5, due: now - 9000, lastReview: now - 4 * 86400000, reps: 3, lapses: 0 },
-      'heap/max-heap': { state: 'review', S: 4, D: 5, due: now - 5000, lastReview: now - 4 * 86400000, reps: 5, lapses: 0 },
-      'greedy/kadane': { state: 'review', S: 4, D: 5, due: now - 1000, lastReview: now - 4 * 86400000, reps: 2, lapses: 0 },
+      'dp/memoization': { state: 'review', S: 4, D: 5, due: now - 9000, lastReview: now - 4 * 86400000, reps: 4, lapses: 0 },
+      'heap/max-heap': { state: 'review', S: 4, D: 5, due: now - 5000, lastReview: now - 4 * 86400000, reps: 8, lapses: 0 },
+      'greedy/kadane': { state: 'review', S: 4, D: 5, due: now - 1000, lastReview: now - 4 * 86400000, reps: 3, lapses: 0 },
     },
     learned: {
       'heap/max-heap': now - 8 * 86400000,
@@ -212,7 +212,7 @@ await import('../js/main.js?fresh=1');
 
 ok(registry.get('session-count').textContent.includes('3 left'), 'session counter shows queue');
 
-// Card 1: dp/memoization (oldest due), reps=3 → quiz.
+// Card 1: dp/memoization (oldest due), reps=4 → quiz.
 const sessionEl = registry.get('session');
 ok(sessionEl.innerHTML.includes('Quiz'), 'first exercise is the quiz (rotation by reps)');
 // Its quiz: "Naive fib is O(2ⁿ). With @cache it becomes…" answer index 2.
@@ -220,7 +220,7 @@ pressGlobal('3');
 ok(sessionEl.innerHTML.includes('Continue'), 'quiz answered → reveal');
 pressGlobal('Enter');
 
-// Card 2: heap/max-heap, reps=5 → cloze with both blanks.
+// Card 2: heap/max-heap, reps=8 → cloze with both blanks.
 const clz0 = registry.get('cloze-input-0');
 const clz1 = registry.get('cloze-input-1');
 ok(!!clz0 && !!clz1, 'second exercise is all-blanks cloze');
@@ -229,7 +229,7 @@ clz1.value = '-heapq.heappop(heap)';
 clz0.fire('keydown', { key: 'Enter' });
 pressGlobal('Enter'); // continue past reveal
 
-// Card 3: greedy/kadane, reps=2 → FULL-TEMPLATE TYPE.
+// Card 3: greedy/kadane, reps=3 (odd) → FULL-TEMPLATE TYPE.
 const area = registry.get('type-area');
 ok(!!area, 'third exercise is full-template typing');
 area.value = templateLines(trickById('greedy/kadane').code).join('\n');
@@ -239,8 +239,8 @@ pressGlobal('Enter'); // continue past reveal
 ok(appEl.innerHTML.includes('Session complete'), 'session summary shown');
 const finalSave = JSON.parse(storage.get('leetcode-grimoire-save-v1'));
 ok(finalSave.reviewLog.length === 3, 'three reviews logged');
-ok(finalSave.cards['dp/memoization'].reps === 4, 'dp card rep incremented');
-ok(finalSave.cards['greedy/kadane'].reps === 3, 'kadane card rep incremented');
+ok(finalSave.cards['dp/memoization'].reps === 5, 'dp card rep incremented');
+ok(finalSave.cards['greedy/kadane'].reps === 4, 'kadane card rep incremented');
 ok(finalSave.cards['heap/max-heap'].due > Date.now(), 'reviewed card scheduled into the future');
 
 pressGlobal('Enter');
@@ -251,6 +251,26 @@ ok(location.hash === '' || location.hash === '#', 'summary Enter goes home');
 location.hash = 'stats';
 ok(appEl.innerHTML.includes('day streak'), 'stats renders streak tile');
 ok(appEl.innerHTML.includes('Mastery by world'), 'stats renders world bars');
+
+// --- drill modes (ungraded muscle-memory reps) -------------------------------------------
+
+location.hash = 'trick/greedy/2'; // Kadane's algorithm
+registry.get('btn-trick-drill').click();
+ok(!!registry.get('type-area'), 'trick drill opens the full-type exercise');
+registry.get('type-area').value = templateLines(trickById('greedy/kadane').code).join('\n');
+registry.get('btn-submit').click();
+ok(registry.get('trick-view').innerHTML.includes('Nailed it'), 'clean drill acknowledged');
+const savedBefore = JSON.parse(storage.get('leetcode-grimoire-save-v1'));
+ok(savedBefore.cards['greedy/kadane'].reps === 4, 'drill does NOT touch the FSRS card');
+registry.get('btn-done').click();
+ok(!!registry.get('btn-trick-drill'), 'drill Done returns to the trick view');
+
+location.hash = 'drill/recit'; // whole-world drill
+ok(!!registry.get('type-area'), 'world drill starts with a type exercise');
+registry.get('btn-reveal').click(); // give up on the first template
+ok(registry.get('session').innerHTML.includes('Study it'), 'world drill reveals the template on a miss');
+pressGlobal('Enter');
+ok(!!registry.get('type-area'), 'world drill advances to the next template');
 
 // --- report ------------------------------------------------------------------------------
 

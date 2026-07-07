@@ -125,6 +125,8 @@ a:hover { text-decoration: underline; }
 /* --- world trick list ------------------------------------------------------ */
 
 .trick-list { display: flex; flex-direction: column; gap: 8px; }
+.drill-cta { margin-bottom: 14px; }
+.learn-cta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
 .trick-row {
   display: flex;

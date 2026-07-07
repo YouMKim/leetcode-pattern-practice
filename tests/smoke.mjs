@@ -166,9 +166,11 @@ function approx(actual, expected, tol, label) {
 
   const trick = trickById('heap/max-heap');
   eq(exerciseTypes(trick), ['cloze', 'parsons', 'type', 'quiz', 'match'], 'session all exercise types');
-  eq(pickExercise(trick, { reps: 0 }), 'cloze', 'session exercise rotation 0');
-  eq(pickExercise(trick, { reps: 2 }), 'type', 'session exercise rotation 2 = full type');
-  eq(pickExercise(trick, { reps: 3 }), 'quiz', 'session exercise rotation 3');
+  eq(pickExercise(trick, { reps: 0 }), 'cloze', 'session rotation 0 = cloze');
+  eq(pickExercise(trick, { reps: 1 }), 'type', 'session odd reps = full type (muscle memory)');
+  eq(pickExercise(trick, { reps: 2 }), 'parsons', 'session rotation 2 = parsons');
+  eq(pickExercise(trick, { reps: 3 }), 'type', 'session rotation 3 = type again');
+  eq(pickExercise(trick, { reps: 4 }), 'quiz', 'session rotation 4 = quiz');
 
   const mq = matchQuestion(trick, ALL_TRICKS, 3);
   eq(mq.options.length, 4, 'session match 4 options');
@@ -198,8 +200,8 @@ function approx(actual, expected, tol, label) {
   const errs = validateAll(WORLDS);
   for (const e of errs) console.error(`  content: ${e}`);
   eq(errs.length, 0, 'content passes schema validation');
-  eq(WORLDS.length, 19, 'content has 19 worlds');
-  eq(ALL_TRICKS.length, 114, 'content has 114 tricks');
+  eq(WORLDS.length, 20, 'content has 20 worlds');
+  eq(ALL_TRICKS.length, 119, 'content has 119 tricks');
   ok(WORLDS.every((w) => w.tricks.length >= 5), 'content ≥5 tricks per world');
 
   // every trick supports cloze + full-type + match, and rotation never crashes
