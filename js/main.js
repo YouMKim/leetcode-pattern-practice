@@ -3,7 +3,7 @@
 import { loadSave, persist, resetSave, exportSave, importSave } from './state.js';
 import { WORLDS, ALL_TRICKS, trickById } from './content/index.js';
 import { newCard, review, RATING, RATING_NAMES, formatMs, previewIntervals } from './engine/fsrs.js';
-import { renderPlan, pickBlank, blanks, grade as gradeCloze } from './engine/cloze.js';
+import { renderPlanAll, blanks, grade as gradeCloze, gradeFull, templateLines } from './engine/cloze.js';
 import { makePuzzle, isSolved, correctCount } from './engine/parsons.js';
 import { dueCards, dueCount, pickExercise, matchQuestion, gradeOutcome, streakDays } from './engine/session.js';
 import {
@@ -93,7 +93,8 @@ function renderHome() {
     reviewCta = `<div class="review-idle">✅ All clear — next review in ${formatMs(Math.max(0, next - now()))}</div>`;
   }
 
-  const groups = ['The Toolbelt', 'The Patterns'].map((g) => {
+  const groupNames = [...new Set(WORLDS.map((w) => w.group))];
+  const groups = groupNames.map((g) => {
     const cards = WORLDS.filter((w) => w.group === g).map((w) => {
       const s = worldStats(w);
       const pct = Math.round((s.learned / s.total) * 100);
@@ -318,7 +319,10 @@ function showSummary(session) {
 // --- exercises -----------------------------------------------------------------------------
 
 function exerciseHeader(trick, kind) {
-  const label = { cloze: '⌨️ Fill the blank', parsons: '🧩 Restore the order', quiz: '❓ Quiz', match: '🔍 Which trick?' }[kind];
+  const label = {
+    cloze: '⌨️ Fill the blanks', parsons: '🧩 Restore the order',
+    type: '🔥 Type the whole template', quiz: '❓ Quiz', match: '🔍 Which trick?',
+  }[kind];
   return `<div class="ex-head"><span class="ex-kind">${label}</span><span class="ex-trick">${kind === 'match' ? '???' : esc(trick.name)}</span></div>`;
 }
 
@@ -329,6 +333,7 @@ function runExercise(container, trick, kind, card, onDone) {
 
   if (kind === 'cloze') return clozeCtrl(container, trick, card, outcome, finish);
   if (kind === 'parsons') return parsonsCtrl(container, trick, card, outcome, finish);
+  if (kind === 'type') return typeCtrl(container, trick, card, outcome, finish);
   const q = kind === 'quiz'
     ? trick.quiz[card.reps % trick.quiz.length]
     : matchQuestion(trick, ALL_TRICKS, seedFor(trick.id, card.reps));
@@ -336,11 +341,10 @@ function runExercise(container, trick, kind, card, onDone) {
 }
 
 function clozeCtrl(container, trick, card, outcome, finish) {
-  const blankIdx = pickBlank(trick.code, card.reps);
-  const plan = renderPlan(trick.code, Math.max(0, blankIdx));
-  const answer = blanks(trick.code)[Math.max(0, blankIdx)].answer;
+  const plan = renderPlanAll(trick.code);
+  const answers = blanks(trick.code).map((b) => b.answer);
 
-  const render = (msg = '') => {
+  const render = (msg = '', values = []) => {
     container.innerHTML = `
       ${exerciseHeader(trick, 'cloze')}
       <div class="ex-when">💡 ${esc(trick.when)}</div>
@@ -351,29 +355,91 @@ function clozeCtrl(container, trick, card, outcome, finish) {
         <button class="btn" id="btn-reveal">Give up</button>
         <button class="btn primary" id="btn-submit">Submit <kbd>⏎</kbd></button>
       </div>`;
-    const input = document.getElementById('cloze-input');
-    input.focus();
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+    answers.forEach((_, i) => {
+      const input = document.getElementById(`cloze-input-${i}`);
+      if (!input) return;
+      input.value = values[i] || '';
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+    });
+    const first = document.getElementById('cloze-input-0');
+    if (first) first.focus();
     document.getElementById('btn-submit').addEventListener('click', submit);
     document.getElementById('btn-hint').addEventListener('click', () => {
       outcome.hints += 1;
-      render(`<span class="hint">hint: starts with “${esc(answer.slice(0, Math.min(3, answer.length)))}…” (${answer.length} chars)</span>`);
-      document.getElementById('cloze-input').focus();
+      const vals = answers.map((_, i) => document.getElementById(`cloze-input-${i}`).value);
+      const miss = answers.findIndex((a, i) => !gradeCloze(vals[i], a));
+      const a = answers[Math.max(0, miss)];
+      render(`<span class="hint">hint (blank ${Math.max(0, miss) + 1}): starts with “${esc(a.slice(0, Math.min(3, a.length)))}…” (${a.length} chars)</span>`, vals);
     });
     document.getElementById('btn-reveal').addEventListener('click', () => { outcome.revealed = true; finish(); });
   };
 
   const submit = () => {
-    const input = document.getElementById('cloze-input');
-    if (gradeCloze(input.value, answer)) return finish();
+    const vals = answers.map((_, i) => document.getElementById(`cloze-input-${i}`).value);
+    const bad = answers.filter((a, i) => !gradeCloze(vals[i], a)).length;
+    if (bad === 0) return finish();
     outcome.wrong += 1;
     if (outcome.wrong >= 2) { outcome.revealed = true; return finish(); }
-    render('<span class="wrong-msg">✗ not quite — one more try</span>');
-    document.getElementById('cloze-input').focus();
+    render(`<span class="wrong-msg">✗ ${answers.length - bad}/${answers.length} blanks right — one more try</span>`, vals);
   };
 
   render();
-  ctrl = { key: () => false }; // input handles its own keys
+  ctrl = { key: () => false }; // inputs handle their own keys
+}
+
+// Full-template recall: type the entire snippet from memory.
+function typeCtrl(container, trick, card, outcome, finish) {
+  const nLines = templateLines(trick.code).length;
+
+  const render = (msg = '', value = '') => {
+    container.innerHTML = `
+      ${exerciseHeader(trick, 'type')}
+      <div class="ex-when">💡 ${esc(trick.when)}</div>
+      <textarea class="type-area" id="type-area" rows="${nLines + 2}" spellcheck="false"
+        placeholder="# type the full ${nLines}-line template from memory
+# comments, blank lines and indentation are forgiven — content and order are graded"></textarea>
+      <div class="ex-msg">${msg}</div>
+      <div class="ex-actions">
+        <button class="btn" id="btn-hint">💡 First line</button>
+        <button class="btn" id="btn-reveal">Give up</button>
+        <button class="btn primary" id="btn-submit">Submit <kbd>⌘⏎</kbd></button>
+      </div>`;
+    const area = document.getElementById('type-area');
+    area.value = value;
+    area.focus();
+    area.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const s = area.selectionStart ?? area.value.length;
+        area.value = area.value.slice(0, s) + '    ' + area.value.slice(s);
+        if (area.selectionStart !== undefined) area.selectionStart = area.selectionEnd = s + 4;
+      }
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); }
+    });
+    document.getElementById('btn-submit').addEventListener('click', submit);
+    document.getElementById('btn-hint').addEventListener('click', () => {
+      outcome.hints += 1;
+      const res = gradeFull(document.getElementById('type-area').value, trick.code);
+      const firstBad = res.results.find((r) => !r.ok);
+      render(`<span class="hint">next line: <code>${esc(firstBad ? firstBad.expected : '(all lines ok — extra lines?)')}</code></span>`,
+        document.getElementById('type-area').value);
+    });
+    document.getElementById('btn-reveal').addEventListener('click', () => { outcome.revealed = true; finish(); });
+  };
+
+  const submit = () => {
+    const area = document.getElementById('type-area');
+    const res = gradeFull(area.value, trick.code);
+    if (res.ok) return finish();
+    outcome.wrong += 1;
+    if (outcome.wrong >= 2) { outcome.revealed = true; return finish(); }
+    const marks = res.results.map((r, i) => `<span class="${r.ok ? 'line-ok' : 'line-bad'}">${i + 1}</span>`).join(' ');
+    const extra = res.extra ? ` · ${res.extra} extra line(s)` : '';
+    render(`<span class="wrong-msg">✗ line check: ${marks}${extra} — fix and resubmit</span>`, area.value);
+  };
+
+  render();
+  ctrl = { key: () => false }; // textarea handles its own keys
 }
 
 function parsonsCtrl(container, trick, card, outcome, finish) {

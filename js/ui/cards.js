@@ -18,14 +18,14 @@ export function renderCode(lines) {
   return `<div class="codeblock">${rows.join('')}</div>`;
 }
 
-// Code block with one blank as an input (from cloze renderPlan output).
+// Code block with blanks as inputs (from cloze renderPlanAll output).
 export function renderClozeCode(plan) {
   const rows = plan.map((segs, i) => {
     const body = segs
       .map((seg) => {
         if (seg.t === 'text') return esc(seg.s);
         if (seg.t === 'filled') return `<span class="cloze-filled">${esc(seg.s)}</span>`;
-        return `<input class="cloze-input" id="cloze-input" autocomplete="off" spellcheck="false" size="${Math.max(6, seg.answer.length + 2)}">`;
+        return `<input class="cloze-input" id="cloze-input-${seg.idx}" data-idx="${seg.idx}" autocomplete="off" spellcheck="false" size="${Math.max(6, seg.answer.length + 2)}">`;
       })
       .join('');
     return `<div class="cline"><span class="cgut">${i + 1}</span><span class="ccode">${body || '&nbsp;'}</span></div>`;

@@ -227,7 +227,26 @@ a:hover { text-decoration: underline; }
 
 .wrong-msg { color: var(--red); }
 .hint { color: var(--amber); }
+.hint code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
 .why { color: var(--dim); font-size: 13px; }
+
+.type-area {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  background: #100e1a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  outline: none;
+  resize: vertical;
+}
+.type-area:focus { border-color: var(--accent); }
+
+.line-ok { color: var(--green); }
+.line-bad { color: var(--red); font-weight: 700; }
 
 .parsons { display: flex; flex-direction: column; gap: 4px; }
 .parsons-line {

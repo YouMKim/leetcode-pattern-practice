@@ -173,4 +173,77 @@ export const GREEDY_TRICKS = [
       { title: 'Reverse Bits', diff: 'E', slug: 'reverse-bits' },
     ],
   },
+  {
+    id: 'greedy/diff-array',
+    name: 'Difference array (range updates)',
+    when: 'Many "add v to range [a,b]" updates — record only the EDGES, prefix-sum once at the end',
+    code: [
+      'diff = [0] * (n + 1)',
+      'for a, b, v in updates:             # add v to indices a..b',
+      '    diff[a] {{+= v}}',
+      '    diff[{{b + 1}}] -= v              # cancel past the range end',
+      'arr, cur = [], 0',
+      'for i in range(n):',
+      '    cur += diff[i]                  # prefix sum rebuilds the values',
+      '    arr.append({{cur}})',
+    ],
+    bigO: { time: 'O(n + updates) vs O(n·updates) naive', space: 'O(n)' },
+    gotchas: [
+      'The array is size n+1 so diff[b+1] never overflows the range',
+      'This is the inverse of prefix sums: edges in, running total out',
+      'Car pooling: timestamps as indices, passengers as v — capacity check on the rebuild',
+    ],
+    quiz: [
+      {
+        q: '1000 range-updates on an array of size n cost…',
+        options: ['O(1000 · n)', 'O(n + 1000)', 'O(n log n)', 'O(1000²)'],
+        answer: 1,
+        why: 'Each update touches two edges; one O(n) prefix pass settles everything.',
+      },
+    ],
+    problems: [
+      { title: 'Car Pooling', diff: 'M', slug: 'car-pooling' },
+      { title: 'Corporate Flight Bookings', diff: 'M', slug: 'corporate-flight-bookings' },
+      { title: 'Range Addition', diff: 'M', slug: 'range-addition' },
+    ],
+  },
+  {
+    id: 'greedy/furthest-reach',
+    name: 'Furthest-reach greedy (jump game)',
+    when: 'Can you reach the end / min jumps — track the furthest index reachable so far',
+    code: [
+      'reach = 0',
+      'for i, x in enumerate(nums):',
+      '    if i {{> reach}}:',
+      '        return False                # a gap you can never cross',
+      '    reach = max(reach, {{i + x}})',
+      'return True',
+      '# min jumps: count when i hits the current window end',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'The check i > reach must come BEFORE extending reach',
+      'Min-jumps variant: jumps += 1 each time i reaches the previous window’s edge',
+      'Gas station is the same shape on a circle: reset the start when the tank dips negative',
+    ],
+    quiz: [
+      {
+        q: 'The greedy is valid because reach…',
+        options: [
+          'Is always even',
+          'Only ever grows — reachability is monotone, no backtracking can help',
+          'Is bounded by n',
+          'Is recomputed per step',
+        ],
+        answer: 1,
+        why: 'If index i is reachable, everything before it was too — one forward pass suffices.',
+      },
+    ],
+    problems: [
+      { title: 'Jump Game', diff: 'M', slug: 'jump-game' },
+      { title: 'Jump Game II', diff: 'M', slug: 'jump-game-ii' },
+      { title: 'Gas Station', diff: 'M', slug: 'gas-station' },
+      { title: 'Video Stitching', diff: 'M', slug: 'video-stitching' },
+    ],
+  },
 ];

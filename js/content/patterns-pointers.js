@@ -185,4 +185,46 @@ export const POINTERS_TRICKS = [
       { title: 'Sort Colors', diff: 'M', slug: 'sort-colors' },
     ],
   },
+  {
+    id: 'pointers/dutch-flag',
+    name: 'Dutch national flag (3-way partition)',
+    when: 'Sort three categories in ONE pass — lows left, highs right, walker in between',
+    code: [
+      'lo, mid, hi = 0, 0, len(nums) - 1',
+      'while mid <= hi:',
+      '    if nums[mid] == 0:',
+      '        nums[lo], nums[mid] = nums[mid], nums[lo]',
+      '        lo += 1',
+      '        {{mid += 1}}',
+      '    elif nums[mid] == 2:',
+      '        nums[mid], nums[hi] = nums[hi], nums[mid]',
+      '        {{hi -= 1}}                   # do NOT advance mid here!',
+      '    else:',
+      '        mid += 1',
+    ],
+    bigO: { time: 'O(n) single pass', space: 'O(1)' },
+    gotchas: [
+      'After swapping with hi, DON’T advance mid — the incoming value is unexamined',
+      'After swapping with lo it is safe to advance — that slot was already vetted',
+      'This is quicksort’s 3-way partition; also great with a pivot instead of 0/1/2',
+    ],
+    quiz: [
+      {
+        q: 'Why does mid stay put after a swap with hi?',
+        options: [
+          'Symmetry with lo',
+          'The value that arrived from hi has never been examined',
+          'To keep hi valid',
+          'It is a bug in the template',
+        ],
+        answer: 1,
+        why: 'The lo-side swap hands you a vetted value; the hi-side swap hands you a mystery.',
+      },
+    ],
+    problems: [
+      { title: 'Sort Colors', diff: 'M', slug: 'sort-colors' },
+      { title: 'Partition Array According to Given Pivot', diff: 'M', slug: 'partition-array-according-to-given-pivot' },
+      { title: 'Move Zeroes', diff: 'E', slug: 'move-zeroes' },
+    ],
+  },
 ];

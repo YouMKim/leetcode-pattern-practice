@@ -183,4 +183,46 @@ export const BACKTRACKING_TRICKS = [
       { title: '3Sum', diff: 'M', slug: '3sum' },
     ],
   },
+  {
+    id: 'backtracking/queens-sets',
+    name: 'N-queens attack sets',
+    when: 'O(1) "is this square attacked?" — columns and both diagonals as three sets',
+    code: [
+      'cols, diag, anti = set(), set(), set()',
+      'def place(r):',
+      '    if r == n:',
+      '        found.append(board_snapshot())',
+      '        return',
+      '    for c in range(n):',
+      '        if c in cols or (r - c) in diag or {{(r + c)}} in anti:',
+      '            continue                     # attacked — prune',
+      '        cols.add(c); diag.add(r - c); anti.add(r + c)',
+      '        place({{r + 1}})',
+      '        cols.remove(c); diag.remove({{r - c}}); anti.remove(r + c)',
+    ],
+    bigO: { time: 'O(n!) with heavy pruning', space: 'O(n)' },
+    gotchas: [
+      'r−c is constant on ↘ diagonals, r+c on ↗ — the matrix coordinate-keys trick',
+      'One queen per row by construction — only columns and diagonals need checking',
+      'The three removes must mirror the three adds exactly',
+    ],
+    quiz: [
+      {
+        q: 'Why is checking rows unnecessary in this template?',
+        options: [
+          'Rows cannot attack',
+          'The recursion places exactly one queen per row by construction',
+          'The sets cover rows too',
+          'It is checked implicitly by cols',
+        ],
+        answer: 1,
+        why: 'place(r) → place(r+1): the structure enforces the row constraint for free.',
+      },
+    ],
+    problems: [
+      { title: 'N-Queens', diff: 'H', slug: 'n-queens' },
+      { title: 'N-Queens II', diff: 'H', slug: 'n-queens-ii' },
+      { title: 'Sudoku Solver', diff: 'H', slug: 'sudoku-solver' },
+    ],
+  },
 ];

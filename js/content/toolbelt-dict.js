@@ -159,4 +159,43 @@ export const DICT_TRICKS = [
       { title: 'Longest Increasing Path in a Matrix', diff: 'H', slug: 'longest-increasing-path-in-a-matrix' },
     ],
   },
+  {
+    id: 'dict/prefix-count',
+    name: 'Prefix-sum + hashmap count',
+    when: 'Count subarrays summing to k — pair the running sum with a map of sums already seen',
+    code: [
+      'count = 0',
+      'prefix = 0',
+      'seen = {0: 1}                       # empty prefix — crucial seed!',
+      'for x in nums:',
+      '    prefix += x',
+      '    count += seen.get({{prefix - k}}, 0)   # earlier prefix that closes a k-sum',
+      '    seen[prefix] = seen.get(prefix, 0) {{+ 1}}',
+    ],
+    bigO: { time: 'O(n)', space: 'O(n)' },
+    gotchas: [
+      'Seed {0: 1} or every subarray starting at index 0 goes uncounted',
+      'Count AFTER looking up, insert AFTER counting — order matters with k = 0',
+      'Variants: remainders mod k, count of odd elements, ones-vs-zeros balance',
+    ],
+    quiz: [
+      {
+        q: 'What does the {0: 1} seed represent?',
+        options: [
+          'A dummy value',
+          'The empty prefix — so subarrays starting at index 0 can close against it',
+          'The first element',
+          'It prevents KeyError only',
+        ],
+        answer: 1,
+        why: 'prefix − k == 0 means "the subarray from the very start sums to k".',
+      },
+    ],
+    problems: [
+      { title: 'Subarray Sum Equals K', diff: 'M', slug: 'subarray-sum-equals-k' },
+      { title: 'Contiguous Array', diff: 'M', slug: 'contiguous-array' },
+      { title: 'Continuous Subarray Sum', diff: 'M', slug: 'continuous-subarray-sum' },
+      { title: 'Path Sum III', diff: 'M', slug: 'path-sum-iii' },
+    ],
+  },
 ];

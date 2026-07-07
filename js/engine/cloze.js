@@ -59,3 +59,51 @@ export function pickBlank(code, reps) {
   const n = blanks(code).length;
   return n === 0 ? -1 : reps % n;
 }
+
+// Render plan hiding EVERY blank (the standard cloze drill): each blank
+// becomes {t:'input', answer, idx}.
+export function renderPlanAll(code) {
+  let idx = -1;
+  return code.map((line) =>
+    parseLine(line).map((seg) => {
+      if (seg.t === 'text') return seg;
+      idx += 1;
+      return { t: 'input', answer: seg.answer, idx };
+    })
+  );
+}
+
+// --- full-template typing -------------------------------------------------
+// Grade a free-typed reproduction of the whole template. Compared line by
+// line with comments, blank lines, indentation and quote style forgiven —
+// the CONTENT of each line, in order, is what must match.
+
+export function templateLines(code) {
+  return code
+    .map((l) => stripMarkers(l))
+    .map(stripComment)
+    .filter((l) => l.trim() !== '');
+}
+
+function stripComment(line) {
+  const i = line.indexOf('#');
+  return i === -1 ? line : line.slice(0, i);
+}
+
+function normFull(line) {
+  return normalize(stripComment(line));
+}
+
+// Returns { ok, expected, results: [{expected, got, ok}] } — results is as
+// long as the expected template; extra typed lines mark it wrong.
+export function gradeFull(text, code) {
+  const expected = templateLines(code);
+  const got = String(text).split('\n').map(stripComment).filter((l) => l.trim() !== '');
+  const results = expected.map((exp, i) => ({
+    expected: exp.trim(),
+    got: got[i] !== undefined ? got[i].trim() : '',
+    ok: got[i] !== undefined && normFull(got[i]) === normFull(exp),
+  }));
+  const ok = results.every((r) => r.ok) && got.length === expected.length;
+  return { ok, expected, extra: Math.max(0, got.length - expected.length), results };
+}

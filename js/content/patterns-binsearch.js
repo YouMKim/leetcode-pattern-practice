@@ -182,4 +182,40 @@ export const BINSEARCH_TRICKS = [
       { title: 'Russian Doll Envelopes', diff: 'H', slug: 'russian-doll-envelopes' },
     ],
   },
+  {
+    id: 'binsearch/flat-2d',
+    name: '2-D grid as a flat array',
+    when: 'A fully-sorted matrix (row-major) is just a sorted array wearing a costume — divmod the index',
+    code: [
+      'lo, hi = 0, rows * cols - 1',
+      'while lo <= hi:',
+      '    mid = (lo + hi) // 2',
+      '    r, c = {{divmod(mid, cols)}}      # flat index → (row, col)',
+      '    val = grid[r][c]',
+      '    if val == target:',
+      '        return True',
+      '    if val < target:',
+      '        lo = {{mid + 1}}',
+      '    else:',
+      '        hi = mid - 1',
+    ],
+    bigO: { time: 'O(log(rows·cols))', space: 'O(1)' },
+    gotchas: [
+      'divmod by COLS (the row width), not rows — the classic transposition slip',
+      'Requires full row-major sortedness; row-and-column-sorted matrices need the staircase walk instead',
+    ],
+    quiz: [
+      {
+        q: 'Flat index 7 in a 3×4 grid is cell…',
+        options: ['(1, 3)', '(2, 1)', '(3, 1)', '(1, 2)'],
+        answer: 0,
+        why: 'divmod(7, 4) = (1, 3) — row 1, column 3.',
+      },
+    ],
+    problems: [
+      { title: 'Search a 2D Matrix', diff: 'M', slug: 'search-a-2d-matrix' },
+      { title: 'Reshape the Matrix', diff: 'E', slug: 'reshape-the-matrix' },
+      { title: 'Convert 1D Array Into 2D Array', diff: 'E', slug: 'convert-1d-array-into-2d-array' },
+    ],
+  },
 ];

@@ -179,4 +179,82 @@ export const DP_TRICKS = [
       { title: 'Russian Doll Envelopes', diff: 'H', slug: 'russian-doll-envelopes' },
     ],
   },
+  {
+    id: 'dp/state-machine',
+    name: 'State-machine DP (stock trading)',
+    when: 'Each day you are in a state (holding / free / cooling) — track the best value of each state',
+    code: [
+      '# best profit ending the day in each state',
+      'hold, free, cool = -prices[0], 0, 0',
+      'for p in prices[1:]:',
+      '    hold, free, cool = (',
+      '        max(hold, {{free - p}}),        # keep holding, or buy today',
+      '        max(free, {{cool}}),            # rest, or leave cooldown',
+      '        {{hold + p}},                   # sell today → cooldown',
+      '    )',
+      'return max(free, cool)',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'Draw the state diagram FIRST — each arrow becomes one term in a max()',
+      'Tuple assignment reads all old values before writing — no ordering bugs',
+      'Transaction fee / k-transactions are the same machine with extra states',
+    ],
+    quiz: [
+      {
+        q: 'The states exist because a greedy single value fails when…',
+        options: [
+          'Prices are negative',
+          'Today’s best action depends on whether you currently hold stock',
+          'n is large',
+          'It never fails',
+        ],
+        answer: 1,
+        why: 'One number can’t remember "am I holding?" — states factor the memory in.',
+      },
+    ],
+    problems: [
+      { title: 'Best Time to Buy and Sell Stock with Cooldown', diff: 'M', slug: 'best-time-to-buy-and-sell-stock-with-cooldown' },
+      { title: 'Best Time to Buy and Sell Stock with Transaction Fee', diff: 'M', slug: 'best-time-to-buy-and-sell-stock-with-transaction-fee' },
+      { title: 'Best Time to Buy and Sell Stock II', diff: 'M', slug: 'best-time-to-buy-and-sell-stock-ii' },
+    ],
+  },
+  {
+    id: 'dp/coin-min',
+    name: 'Min-coins (unbounded knapsack)',
+    when: 'Fewest items to reach a target, unlimited reuse — the minimizing twin of coin counting',
+    code: [
+      'dp = [{{float("inf")}}] * (target + 1)',
+      'dp[0] = {{0}}                        # zero coins make zero',
+      'for t in range(1, target + 1):',
+      '    for c in coins:',
+      '        if c <= t and dp[t - c] + 1 < dp[t]:',
+      '            dp[t] = {{dp[t - c] + 1}}',
+      'return dp[target] if dp[target] != float("inf") else -1',
+    ],
+    bigO: { time: 'O(target · coins)', space: 'O(target)' },
+    gotchas: [
+      'inf sentinel marks "unreachable" — remember the final -1 translation',
+      'Minimizing: loop order does not matter; COUNTING combinations: it does (items outer)',
+      'Greedy by biggest coin fails: coins [1,3,4], target 6 → greedy 3, optimal 2',
+    ],
+    quiz: [
+      {
+        q: 'Why does greedy (largest coin first) fail for min-coins?',
+        options: [
+          'It is too slow',
+          'Locally-best coins can force many small leftovers — [1,3,4] making 6',
+          'It only fails with coin 1 missing',
+          'It doesn’t fail',
+        ],
+        answer: 1,
+        why: '4+1+1 = 3 coins beats nothing: 3+3 = 2 coins. Greedy lacks foresight.',
+      },
+    ],
+    problems: [
+      { title: 'Coin Change', diff: 'M', slug: 'coin-change' },
+      { title: 'Perfect Squares', diff: 'M', slug: 'perfect-squares' },
+      { title: 'Minimum Cost For Tickets', diff: 'M', slug: 'minimum-cost-for-tickets' },
+    ],
+  },
 ];

@@ -156,4 +156,82 @@ export const LIST_TRICKS = [
       { title: 'Continuous Subarray Sum', diff: 'M', slug: 'continuous-subarray-sum' },
     ],
   },
+  {
+    id: 'list/cyclic-sort',
+    name: 'Cyclic sort (index placement)',
+    when: 'An array holds values 1..n (or 0..n) — every value has a home index; swap it there',
+    code: [
+      'i = 0',
+      'while i < len(nums):',
+      '    home = nums[i] - 1              # value v belongs at index v-1',
+      '    if nums[i] != nums[{{home}}]:',
+      '        nums[i], nums[home] = {{nums[home], nums[i]}}   # send it home',
+      '    else:',
+      '        {{i += 1}}                    # placed (or duplicate) — move on',
+      '# afterwards: nums[i] != i+1 reveals the missing/duplicate',
+    ],
+    bigO: { time: 'O(n) — each swap places a value forever', space: 'O(1)' },
+    gotchas: [
+      'Only advance i when no swap happened — the swapped-in value may belong elsewhere',
+      'Compare nums[i] != nums[home], not i != home — duplicates loop forever otherwise',
+      'The follow-up scan finds missing numbers, duplicates, and first-missing-positive',
+    ],
+    quiz: [
+      {
+        q: 'Why is the while loop O(n) despite the swaps?',
+        options: [
+          'Swaps are O(0)',
+          'Every swap puts at least one value in its final home — at most n swaps ever',
+          'It is O(n²)',
+          'Python optimizes swaps',
+        ],
+        answer: 1,
+        why: 'Each element gets seated once; i only stalls when a seat gets filled.',
+      },
+    ],
+    problems: [
+      { title: 'Missing Number', diff: 'E', slug: 'missing-number' },
+      { title: 'Find All Numbers Disappeared in an Array', diff: 'E', slug: 'find-all-numbers-disappeared-in-an-array' },
+      { title: 'Set Mismatch', diff: 'E', slug: 'set-mismatch' },
+      { title: 'First Missing Positive', diff: 'H', slug: 'first-missing-positive' },
+    ],
+  },
+  {
+    id: 'list/negation-marking',
+    name: 'Negation marking (index as hash)',
+    when: 'Values 1..n and O(1) space required — use the SIGN at index v−1 as a "seen" bit',
+    code: [
+      'for x in nums:',
+      '    i = {{abs(x) - 1}}               # abs: x may already be flipped',
+      '    if nums[i] > 0:',
+      '        nums[i] = {{-nums[i]}}        # mark index i as seen',
+      '    else:',
+      '        dups.append(abs(x))          # second visit → duplicate',
+      '# indices still positive were never visited → missing numbers',
+    ],
+    bigO: { time: 'O(n)', space: 'O(1)' },
+    gotchas: [
+      'abs() everywhere — earlier iterations may have negated the value you read',
+      'Destructive: restore with abs() at the end if the input must survive',
+      'Needs strictly positive values in a known 1..n range',
+    ],
+    quiz: [
+      {
+        q: 'This trick fundamentally requires the values to be…',
+        options: [
+          'Sorted',
+          'Positive and bounded by the array length',
+          'Unique',
+          'Even',
+        ],
+        answer: 1,
+        why: 'Value v must map to a valid index, and the sign must be spare storage.',
+      },
+    ],
+    problems: [
+      { title: 'Find All Duplicates in an Array', diff: 'M', slug: 'find-all-duplicates-in-an-array' },
+      { title: 'Find All Numbers Disappeared in an Array', diff: 'E', slug: 'find-all-numbers-disappeared-in-an-array' },
+      { title: 'First Missing Positive', diff: 'H', slug: 'first-missing-positive' },
+    ],
+  },
 ];

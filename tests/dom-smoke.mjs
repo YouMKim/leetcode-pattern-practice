@@ -100,24 +100,28 @@ function pressGlobal(key) {
 // --- boot the app ---------------------------------------------------------------
 
 const { RATING } = await import('../js/engine/fsrs.js');
+const { templateLines } = await import('../js/engine/cloze.js');
+const { trickById } = await import('../js/content/index.js');
 await import('../js/main.js');
 
 ok(appEl.innerHTML.includes('LEETCODE GRIMOIRE'), 'home renders title');
-ok(appEl.querySelectorAll('.world-card').length === 13, 'home shows 13 worlds');
+ok(appEl.querySelectorAll('.world-card').length === 19, 'home shows 19 worlds');
 
 // --- learn flow: heap/max-heap ----------------------------------------------------
 
 location.hash = 'world/heap';
-ok(appEl.querySelectorAll('.trick-row').length === 5, 'heap world lists 5 tricks');
+ok(appEl.querySelectorAll('.trick-row').length === 7, 'heap world lists 7 tricks');
 
 location.hash = 'trick/heap/1'; // Max-heap via negation
 ok(appEl.innerHTML.includes('Max-heap via negation'), 'trick view renders');
 ok(!!registry.get('btn-learn'), 'learn button present');
 
-registry.get('btn-learn').click(); // start practice (cloze, blank 0 = "-num")
-const input = registry.get('cloze-input');
-ok(!!input, 'cloze exercise shows input');
+registry.get('btn-learn').click(); // start practice: cloze with ALL blanks
+const input = registry.get('cloze-input-0');
+const input1 = registry.get('cloze-input-1');
+ok(!!input && !!input1, 'cloze exercise shows every blank as an input');
 input.value = '-num';
+input1.value = '-heapq.heappop(heap)';
 input.fire('keydown', { key: 'Enter' });
 
 const saveAfterLearn = JSON.parse(storage.get('leetcode-grimoire-save-v1'));
@@ -136,11 +140,11 @@ ok(appEl.innerHTML.includes('in '), 'world row shows next-due status');
 
 location.hash = 'trick/heap/0'; // heapq essentials
 registry.get('btn-learn').click();
-const input2 = registry.get('cloze-input');
+const input2 = registry.get('cloze-input-0');
 input2.value = 'wrong-answer';
 input2.fire('keydown', { key: 'Enter' });
-ok(registry.get('trick-view').innerHTML.includes('not quite'), 'wrong answer shows retry message');
-const input2b = registry.get('cloze-input');
+ok(registry.get('trick-view').innerHTML.includes('blanks right'), 'wrong answer shows retry message');
+const input2b = registry.get('cloze-input-0');
 input2b.value = 'still-wrong';
 input2b.fire('keydown', { key: 'Enter' });
 
@@ -176,15 +180,22 @@ ok(appEl.innerHTML.includes('Nothing due') || appEl.innerHTML.includes('ex-head'
 // --- fresh import with a doctored save: full session walkthrough ---------------------
 
 {
-  // Build a save where two tricks are due NOW with different rep counts.
+  // Build a save where three tricks are due NOW with chosen rep counts:
+  // rotation is [cloze, parsons, type, quiz, match] → reps 3 = quiz,
+  // reps 5 = cloze, reps 2 = full-type.
   const now = Date.now();
   const doctored = {
     version: 1,
     cards: {
-      'heap/max-heap': { state: 'review', S: 4, D: 5, due: now - 5000, lastReview: now - 4 * 86400000, reps: 4, lapses: 0 },
-      'dp/memoization': { state: 'review', S: 4, D: 5, due: now - 9000, lastReview: now - 4 * 86400000, reps: 2, lapses: 0 },
+      'dp/memoization': { state: 'review', S: 4, D: 5, due: now - 9000, lastReview: now - 4 * 86400000, reps: 3, lapses: 0 },
+      'heap/max-heap': { state: 'review', S: 4, D: 5, due: now - 5000, lastReview: now - 4 * 86400000, reps: 5, lapses: 0 },
+      'greedy/kadane': { state: 'review', S: 4, D: 5, due: now - 1000, lastReview: now - 4 * 86400000, reps: 2, lapses: 0 },
     },
-    learned: { 'heap/max-heap': now - 8 * 86400000, 'dp/memoization': now - 8 * 86400000 },
+    learned: {
+      'heap/max-heap': now - 8 * 86400000,
+      'dp/memoization': now - 8 * 86400000,
+      'greedy/kadane': now - 8 * 86400000,
+    },
     solved: {},
     reviewLog: [],
   };
@@ -199,9 +210,9 @@ winHandlers.hashchange.length = 0;
 location._hash = '#review';
 await import('../js/main.js?fresh=1');
 
-ok(registry.get('session-count').textContent.includes('2 left'), 'session counter shows queue');
+ok(registry.get('session-count').textContent.includes('3 left'), 'session counter shows queue');
 
-// Card 1: dp/memoization (older due first), reps=2 → quiz (rotation index 2).
+// Card 1: dp/memoization (oldest due), reps=3 → quiz.
 const sessionEl = registry.get('session');
 ok(sessionEl.innerHTML.includes('Quiz'), 'first exercise is the quiz (rotation by reps)');
 // Its quiz: "Naive fib is O(2ⁿ). With @cache it becomes…" answer index 2.
@@ -209,17 +220,27 @@ pressGlobal('3');
 ok(sessionEl.innerHTML.includes('Continue'), 'quiz answered → reveal');
 pressGlobal('Enter');
 
-// Card 2: heap/max-heap, reps=4 → cloze (4 % 4 = 0).
-const clz = registry.get('cloze-input');
-ok(!!clz, 'second exercise is cloze');
-clz.value = '-num';
-clz.fire('keydown', { key: 'Enter' });
+// Card 2: heap/max-heap, reps=5 → cloze with both blanks.
+const clz0 = registry.get('cloze-input-0');
+const clz1 = registry.get('cloze-input-1');
+ok(!!clz0 && !!clz1, 'second exercise is all-blanks cloze');
+clz0.value = '-num';
+clz1.value = '-heapq.heappop(heap)';
+clz0.fire('keydown', { key: 'Enter' });
+pressGlobal('Enter'); // continue past reveal
+
+// Card 3: greedy/kadane, reps=2 → FULL-TEMPLATE TYPE.
+const area = registry.get('type-area');
+ok(!!area, 'third exercise is full-template typing');
+area.value = templateLines(trickById('greedy/kadane').code).join('\n');
+registry.get('btn-submit').click();
 pressGlobal('Enter'); // continue past reveal
 
 ok(appEl.innerHTML.includes('Session complete'), 'session summary shown');
 const finalSave = JSON.parse(storage.get('leetcode-grimoire-save-v1'));
-ok(finalSave.reviewLog.length === 2, 'two reviews logged');
-ok(finalSave.cards['dp/memoization'].reps === 3, 'dp card rep incremented');
+ok(finalSave.reviewLog.length === 3, 'three reviews logged');
+ok(finalSave.cards['dp/memoization'].reps === 4, 'dp card rep incremented');
+ok(finalSave.cards['greedy/kadane'].reps === 3, 'kadane card rep incremented');
 ok(finalSave.cards['heap/max-heap'].due > Date.now(), 'reviewed card scheduled into the future');
 
 pressGlobal('Enter');

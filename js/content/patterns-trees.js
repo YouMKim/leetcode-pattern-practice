@@ -187,4 +187,45 @@ export const TREES_TRICKS = [
       { title: 'Insert into a Binary Search Tree', diff: 'M', slug: 'insert-into-a-binary-search-tree' },
     ],
   },
+  {
+    id: 'trees/lca',
+    name: 'Lowest common ancestor',
+    when: 'Deepest node that has both targets in its subtree — where the searches split',
+    code: [
+      'def lca(node, p, q):                # general binary tree',
+      '    if not node or node is p or node is q:',
+      '        return {{node}}',
+      '    left = lca(node.left, p, q)',
+      '    right = lca(node.right, p, q)',
+      '    if left and right:',
+      '        return {{node}}               # p and q split here',
+      '    return {{left or right}}          # both are on one side',
+      '# BST shortcut: walk from root; first node with',
+      '# p.val <= node.val <= q.val is the answer',
+    ],
+    bigO: { time: 'O(n) general, O(h) in a BST', space: 'O(h)' },
+    gotchas: [
+      'left AND right non-null means the split point — that node is the LCA',
+      'A node can be its own ancestor — returning node when node is p handles it',
+      'In a BST, values steer the walk — no recursion over both sides needed',
+    ],
+    quiz: [
+      {
+        q: 'In the general version, `return left or right` covers the case where…',
+        options: [
+          'Neither target exists',
+          'Both targets sit in the same subtree — pass the found LCA (or node) upward',
+          'The tree is empty',
+          'p equals q',
+        ],
+        answer: 1,
+        why: 'One side reports the answer (or a found target); the other reports None.',
+      },
+    ],
+    problems: [
+      { title: 'Lowest Common Ancestor of a Binary Tree', diff: 'M', slug: 'lowest-common-ancestor-of-a-binary-tree' },
+      { title: 'Lowest Common Ancestor of a BST', diff: 'M', slug: 'lowest-common-ancestor-of-a-binary-search-tree' },
+      { title: 'Lowest Common Ancestor of Deepest Leaves', diff: 'M', slug: 'lowest-common-ancestor-of-deepest-leaves' },
+    ],
+  },
 ];

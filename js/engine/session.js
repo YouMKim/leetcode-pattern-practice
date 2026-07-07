@@ -19,11 +19,13 @@ export function dueCount(save, now) {
 }
 
 // Exercise types available for a trick; rotation keyed by rep count so each
-// review exercises a different muscle.
+// review exercises a different muscle. Difficulty escalates: fill the blanks
+// → restore the order → TYPE THE WHOLE TEMPLATE → quizzes.
 export function exerciseTypes(trick) {
   const types = [];
   if (blanks(trick.code).length > 0) types.push('cloze');
   if (parsonsEligible(trick.code)) types.push('parsons');
+  types.push('type'); // full-template recall — the mastery exercise
   if (trick.quiz && trick.quiz.length) types.push('quiz');
   types.push('match');
   return types;
@@ -65,7 +67,7 @@ export function matchQuestion(trick, allTricks, seed = 1) {
 
 // Objective grading: performance → FSRS rating. Fast+clean = Easy,
 // clean = Good, needed a retry or hint = Hard, failed = Again.
-const FAST_MS = { cloze: 15000, parsons: 30000, quiz: 8000, match: 8000 };
+const FAST_MS = { cloze: 25000, parsons: 30000, type: 90000, quiz: 8000, match: 8000 };
 
 export function gradeOutcome({ kind, wrong = 0, hints = 0, revealed = false, ms = Infinity }) {
   if (revealed || wrong >= 2) return RATING.AGAIN;

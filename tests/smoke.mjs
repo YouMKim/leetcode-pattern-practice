@@ -2,7 +2,10 @@
 import {
   W, RATING, newCard, review, retrievability, intervalFor, formatMs, previewIntervals, DAY_MS,
 } from '../js/engine/fsrs.js';
-import { parseLine, blanks, stripMarkers, renderPlan, grade, normalize, pickBlank } from '../js/engine/cloze.js';
+import {
+  parseLine, blanks, stripMarkers, renderPlan, renderPlanAll, grade, normalize, pickBlank,
+  gradeFull, templateLines,
+} from '../js/engine/cloze.js';
 import { puzzleLines, eligible, makePuzzle, isSolved, correctCount, mulberry32 } from '../js/engine/parsons.js';
 import { dueCards, exerciseTypes, pickExercise, matchQuestion, gradeOutcome, streakDays } from '../js/engine/session.js';
 import { validateAll } from '../js/content/schema.js';
@@ -107,6 +110,21 @@ function approx(actual, expected, tol, label) {
   ok(grade('a  +  b', 'a + b'), 'cloze grade whitespace-collapse');
   ok(!grade('num', '-num'), 'cloze grade rejects wrong');
   eq(pickBlank(code, 4), 1, 'cloze blank rotation');
+
+  const all = renderPlanAll(code).flat();
+  eq(all.filter((s) => s.t === 'input').length, 3, 'cloze renderPlanAll hides every blank');
+  eq(all.filter((s) => s.t === 'input').map((s) => s.idx), [0, 1, 2], 'cloze renderPlanAll indexes blanks');
+
+  // full-template grading
+  const tmpl = ['prev = None', 'while cur:', '    nxt = {{cur.next}}   # save it', '', '    prev = cur'];
+  eq(templateLines(tmpl), ['prev = None', 'while cur:', '    nxt = cur.next   ', '    prev = cur'], 'type templateLines resolves/strips');
+  ok(gradeFull('prev = None\nwhile cur:\nnxt = cur.next\nprev = cur', tmpl).ok, 'type grade ignores indentation');
+  ok(gradeFull('prev = None\n\nwhile cur:\n  nxt  =  cur.next  # note\nprev = cur', tmpl).ok, 'type grade ignores blanks/comments/spacing');
+  ok(!gradeFull('prev = None\nwhile cur:\nprev = cur', tmpl).ok, 'type grade catches missing line');
+  ok(!gradeFull('prev = None\nwhile cur:\nnxt = cur\nprev = cur', tmpl).ok, 'type grade catches wrong line');
+  ok(!gradeFull('prev = None\nwhile cur:\nnxt = cur.next\nprev = cur\nreturn prev', tmpl).ok, 'type grade catches extra line');
+  const diff = gradeFull('prev = None\nwhile cur:\nWRONG\nprev = cur', tmpl);
+  eq(diff.results.map((r) => r.ok), [true, true, false, true], 'type grade per-line diff');
 }
 
 // --- Parsons -----------------------------------------------------------------
@@ -147,9 +165,10 @@ function approx(actual, expected, tol, label) {
   eq(dueCards(save, NOW).map((d) => d.id), ['a/z', 'a/x'], 'session due sorted oldest first');
 
   const trick = trickById('heap/max-heap');
-  eq(exerciseTypes(trick), ['cloze', 'parsons', 'quiz', 'match'], 'session all exercise types');
+  eq(exerciseTypes(trick), ['cloze', 'parsons', 'type', 'quiz', 'match'], 'session all exercise types');
   eq(pickExercise(trick, { reps: 0 }), 'cloze', 'session exercise rotation 0');
-  eq(pickExercise(trick, { reps: 2 }), 'quiz', 'session exercise rotation 2');
+  eq(pickExercise(trick, { reps: 2 }), 'type', 'session exercise rotation 2 = full type');
+  eq(pickExercise(trick, { reps: 3 }), 'quiz', 'session exercise rotation 3');
 
   const mq = matchQuestion(trick, ALL_TRICKS, 3);
   eq(mq.options.length, 4, 'session match 4 options');
@@ -163,6 +182,8 @@ function approx(actual, expected, tol, label) {
   eq(gradeOutcome({ kind: 'cloze', revealed: true }), RATING.AGAIN, 'grade reveal = Again');
   eq(gradeOutcome({ kind: 'quiz', wrong: 1 }), RATING.AGAIN, 'grade mcq miss = Again');
   eq(gradeOutcome({ kind: 'quiz', wrong: 0, ms: 3000 }), RATING.EASY, 'grade mcq fast = Easy');
+  eq(gradeOutcome({ kind: 'type', wrong: 0, hints: 0, ms: 60000 }), RATING.EASY, 'grade type under 90s = Easy');
+  eq(gradeOutcome({ kind: 'type', wrong: 1, ms: 60000 }), RATING.HARD, 'grade type retry = Hard');
 
   const day = 86400000;
   const today = Math.floor(NOW / day) * day + 1000;
@@ -177,14 +198,15 @@ function approx(actual, expected, tol, label) {
   const errs = validateAll(WORLDS);
   for (const e of errs) console.error(`  content: ${e}`);
   eq(errs.length, 0, 'content passes schema validation');
-  eq(WORLDS.length, 13, 'content has 13 worlds');
-  eq(ALL_TRICKS.length, 65, 'content has 65 tricks');
-  ok(WORLDS.every((w) => w.tricks.length === 5), 'content 5 tricks per world');
+  eq(WORLDS.length, 19, 'content has 19 worlds');
+  eq(ALL_TRICKS.length, 114, 'content has 114 tricks');
+  ok(WORLDS.every((w) => w.tricks.length >= 5), 'content ≥5 tricks per world');
 
-  // every trick supports at least cloze + match, and rotation never crashes
+  // every trick supports cloze + full-type + match, and rotation never crashes
   for (const t of ALL_TRICKS) {
     const types = exerciseTypes(t);
-    ok(types.includes('cloze') && types.includes('match'), `${t.id} has cloze+match`);
+    ok(types.includes('cloze') && types.includes('type') && types.includes('match'), `${t.id} has cloze+type+match`);
+    ok(templateLines(t.code).length >= 2, `${t.id} typeable template`);
     for (let reps = 0; reps < 6; reps++) {
       const kind = pickExercise(t, { reps });
       ok(types.includes(kind), `${t.id} rotation valid at reps=${reps}`);
