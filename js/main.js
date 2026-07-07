@@ -1,6 +1,7 @@
 // LeetCode Grimoire — app shell: routing, screens, exercise controllers.
 
 import { loadSave, persist, resetSave, exportSave, importSave } from './state.js';
+import { cloudConfigured, cloudState, onCloudChange, initCloud, signIn, signOut, schedulePush } from './cloud.js';
 import { WORLDS, ALL_TRICKS, trickById } from './content/index.js';
 import { newCard, review, RATING, RATING_NAMES, formatMs, previewIntervals } from './engine/fsrs.js';
 import { renderPlanAll, blanks, grade as gradeCloze, gradeFull, templateLines } from './engine/cloze.js';
@@ -16,6 +17,12 @@ let save = loadSave();
 let ctrl = null; // active screen controller: { key(e) }
 
 const now = () => Date.now();
+
+// Persist locally + (when signed in) debounce-push to Supabase.
+function syncSave() {
+  persist(save);
+  schedulePush(save);
+}
 
 function seedFor(id, reps) {
   let h = reps + 1;
@@ -65,7 +72,7 @@ function wireProblemChecks(rerender) {
       const slug = btn.dataset.slug;
       if (save.solved[slug]) delete save.solved[slug];
       else save.solved[slug] = now();
-      persist(save);
+      syncSave();
       rerender();
     });
   }
@@ -110,6 +117,19 @@ function renderHome() {
     return `<div class="group-title">${g}</div><div class="worlds">${cards.join('')}</div>`;
   });
 
+  let cloudHtml = '';
+  if (cloudConfigured()) {
+    const cs = cloudState();
+    if (cs.email) {
+      const badge = { syncing: '☁ syncing…', synced: '☁ synced', error: '⚠ sync error', out: '☁' }[cs.status] || '☁';
+      cloudHtml = `<div class="cloud-bar">${badge} ${esc(cs.email)} · <a href="#" id="btn-signout">sign out</a></div>`;
+    } else {
+      cloudHtml = `<div class="cloud-bar">Sync across devices:
+        <button class="btn" id="btn-google">Sign in with Google</button>
+        <button class="btn" id="btn-github">Sign in with GitHub</button></div>`;
+    }
+  }
+
   app.innerHTML = `
     <div class="home">
       <div class="hero">
@@ -117,6 +137,7 @@ function renderHome() {
         <div class="hero-sub">every trick in the book — burned into memory with spaced repetition</div>
         <div class="hero-meta">${streak > 0 ? `🔥 ${streak}-day streak · ` : ''}${learnedTotal}/${ALL_TRICKS.length} tricks learned</div>
         <div class="hero-cta">${reviewCta}</div>
+        ${cloudHtml}
       </div>
       ${groups.join('')}
       <div class="home-foot">
@@ -146,8 +167,14 @@ function renderHome() {
   });
   document.getElementById('btn-reset').addEventListener('click', (e) => {
     e.preventDefault();
-    if (confirm('Wipe all Grimoire progress?')) { resetSave(); save = loadSave(); route(); }
+    if (confirm('Wipe all Grimoire progress?')) { resetSave(); save = loadSave(); syncSave(); route(); }
   });
+  const btnGoogle = document.getElementById('btn-google');
+  if (btnGoogle) btnGoogle.addEventListener('click', () => signIn('google'));
+  const btnGithub = document.getElementById('btn-github');
+  if (btnGithub) btnGithub.addEventListener('click', () => signIn('github'));
+  const btnSignout = document.getElementById('btn-signout');
+  if (btnSignout) btnSignout.addEventListener('click', (e) => { e.preventDefault(); signOut().then(route); });
 
   ctrl = {
     key(e) {
@@ -322,7 +349,7 @@ function runSingleCard(trick, { backHash, worldHash }) {
     save.cards[trick.id] = updated;
     if (!save.learned[trick.id]) save.learned[trick.id] = now();
     save.reviewLog.push({ id: trick.id, rating, at: now() });
-    persist(save);
+    syncSave();
     showReveal(container, trick, rating, updated, () => {
       location.hash = worldHash;
       route();
@@ -365,7 +392,7 @@ function renderReview() {
       const updated = review(card, rating, now());
       save.cards[id] = updated;
       save.reviewLog.push({ id, rating, at: now() });
-      persist(save);
+      syncSave();
       session.queue.shift();
       session.done += 1;
       session.counts[rating] += 1;
@@ -682,3 +709,18 @@ function renderStats() {
 }
 
 route();
+
+// Cloud sync boot: on sign-in, cloud+local saves merge and re-render.
+initCloud(
+  () => save,
+  (merged) => {
+    save = merged;
+    persist(save);
+    route();
+  }
+);
+onCloudChange(() => {
+  // refresh the sync badge only when sitting on the home screen
+  const hash = location.hash.slice(1);
+  if (!hash) renderHome();
+});

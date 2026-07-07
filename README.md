@@ -55,6 +55,8 @@ Progress lives in localStorage (with JSON export/import for backup). Problem che
 
 ## Play
 
+**Hosted:** https://youmkim.github.io/leetcode-pattern-practice/ — auto-deployed from `main` (tests gate the deploy).
+
 **Locally** (ES modules need a server):
 
 ```sh
@@ -65,6 +67,20 @@ python3 -m http.server 8000
 
 Or deploy to GitHub Pages — it's a static site; the included workflow tests and deploys the `gh-pages` branch on every push to `main`.
 
+## Cloud sync (Google / GitHub sign-in)
+
+Progress lives in localStorage by default. With Supabase configured, signing in syncs it across devices: on login the cloud and local saves are **merged** (per-card, most-recently-reviewed wins; learned/solved union), and every change debounce-pushes back up. All access is guarded by Row-Level Security — each user can only touch their own row.
+
+Setup (one time):
+1. Apply `supabase/schema.sql` to your Supabase project (SQL editor or psql) — creates `grimoire_saves` + RLS policies.
+2. Paste your project's **anon/publishable key** into `js/supabase-config.js` (Dashboard → Project Settings → API Keys). It's safe to commit — RLS does the guarding.
+3. Enable providers in Dashboard → Authentication → Sign In / Providers:
+   - **GitHub**: create an OAuth app at github.com/settings/developers with callback `https://<project-ref>.supabase.co/auth/v1/callback`, paste the client ID/secret.
+   - **Google**: create OAuth credentials in Google Cloud Console with the same callback.
+4. Dashboard → Authentication → URL Configuration: set the Site URL to the hosted URL and add `http://localhost:8000` to Additional Redirect URLs for local play.
+
+No key configured → the game silently stays local-only (supabase-js is only loaded when enabled).
+
 ## Project layout
 
 ```
@@ -72,6 +88,8 @@ index.html · css/style.css
 js/
   main.js            routing, screens, exercise controllers
   state.js           localStorage save + export/import
+  cloud.js           Supabase auth + debounced save sync (lazy CDN import)
+  supabase-config.js project URL + anon key (blank = local-only mode)
   engine/
     fsrs.js          compact FSRS v4.5 scheduler (pure, node-testable)
     cloze.js         {{blank}} template parsing + grading

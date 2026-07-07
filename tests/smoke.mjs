@@ -9,6 +9,7 @@ import {
 import { puzzleLines, eligible, makePuzzle, isSolved, correctCount, mulberry32 } from '../js/engine/parsons.js';
 import { dueCards, exerciseTypes, pickExercise, matchQuestion, gradeOutcome, streakDays } from '../js/engine/session.js';
 import { validateAll } from '../js/content/schema.js';
+import { mergeSaves } from '../js/engine/merge.js';
 import { WORLDS, ALL_TRICKS, trickById } from '../js/content/index.js';
 
 let failures = 0;
@@ -192,6 +193,32 @@ function approx(actual, expected, tol, label) {
   eq(streakDays([{ at: today }, { at: today - day }, { at: today - 2 * day }], NOW), 3, 'streak 3 days');
   eq(streakDays([{ at: today - day }], NOW), 1, 'streak survives if today unplayed');
   eq(streakDays([], NOW), 0, 'streak empty');
+}
+
+// --- Save merging (cloud sync) ------------------------------------------------------
+
+{
+  const local = {
+    cards: { a: { reps: 3, lastReview: 100 }, c: { reps: 1, lastReview: 300 } },
+    learned: { a: 50, c: 300 },
+    solved: { x: 1 },
+    reviewLog: [{ id: 'a', rating: 3, at: 100 }],
+  };
+  const cloud = {
+    cards: { a: { reps: 5, lastReview: 200 }, b: { reps: 1, lastReview: 150 } },
+    learned: { a: 40, b: 150 },
+    solved: { y: 2 },
+    reviewLog: [{ id: 'a', rating: 3, at: 100 }, { id: 'b', rating: 2, at: 150 }],
+  };
+  const m = mergeSaves(local, cloud);
+  eq(m.cards.a.reps, 5, 'merge picks the later-reviewed card');
+  eq(m.cards.b.reps, 1, 'merge keeps cloud-only cards');
+  eq(m.cards.c.reps, 1, 'merge keeps local-only cards');
+  eq(m.learned.a, 40, 'merge keeps the earliest learn time');
+  ok(m.solved.x === 1 && m.solved.y === 2, 'merge unions solved problems');
+  eq(m.reviewLog.length, 2, 'merge dedupes the review log by (id, at)');
+  eq(m.reviewLog[0].at, 100, 'merge sorts the log chronologically');
+  eq(mergeSaves(null, null).version, 1, 'merge tolerates empty saves');
 }
 
 // --- Content validation -----------------------------------------------------------

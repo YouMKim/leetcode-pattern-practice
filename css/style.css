@@ -82,6 +82,17 @@ a:hover { text-decoration: underline; }
 .hero-cta { margin-top: 18px; }
 .review-idle { color: var(--dim); padding: 10px; }
 
+.cloud-bar {
+  margin-top: 16px;
+  color: var(--dim);
+  font-size: 12.5px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .group-title {
   color: var(--dim);
   font-size: 12px;
