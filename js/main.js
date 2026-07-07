@@ -32,8 +32,21 @@ function seedFor(id, reps) {
 
 // --- routing -----------------------------------------------------------------
 
+const GUEST_KEY = 'leetcode-grimoire-guest';
+
+function guestMode() {
+  try { return localStorage.getItem(GUEST_KEY) === '1'; } catch { return false; }
+}
+
+// Auth-first: when cloud sync is configured, the front door is the sign-in
+// gate — unless the user is signed in or explicitly chose guest mode.
+function needsGate() {
+  return cloudConfigured() && !cloudState().email && !guestMode();
+}
+
 function route() {
   ctrl = null;
+  if (needsGate()) return renderAuthGate();
   const hash = location.hash.slice(1);
   const [screen, a, b] = hash.split('/');
   if (screen === 'world') return renderWorld(a);
@@ -50,6 +63,32 @@ window.addEventListener('keydown', (e) => {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if (ctrl && ctrl.key && ctrl.key(e)) e.preventDefault();
 });
+
+// --- auth gate -------------------------------------------------------------------
+
+function renderAuthGate() {
+  const cs = cloudState();
+  const busy = cs.status === 'syncing';
+  app.innerHTML = `
+    <div class="auth-gate">
+      <div class="hero-title">LEETCODE GRIMOIRE</div>
+      <div class="hero-sub">every trick in the book — burned into memory with spaced repetition</div>
+      <div class="gate-box">
+        <div class="gate-pitch">Sign in and your progress — every card, streak and stat — follows you to any device.</div>
+        <button class="btn primary big gate-btn" id="btn-google" ${busy ? 'disabled' : ''}>Continue with Google</button>
+        <button class="btn primary big gate-btn" id="btn-github" ${busy ? 'disabled' : ''}>Continue with GitHub</button>
+        <a href="#" id="btn-guest" class="gate-guest">continue as guest — progress stays on this device only</a>
+      </div>
+    </div>`;
+  document.getElementById('btn-google').addEventListener('click', () => signIn('google'));
+  document.getElementById('btn-github').addEventListener('click', () => signIn('github'));
+  document.getElementById('btn-guest').addEventListener('click', (e) => {
+    e.preventDefault();
+    try { localStorage.setItem(GUEST_KEY, '1'); } catch { /* still navigable */ }
+    route();
+  });
+  ctrl = null;
+}
 
 // --- shared bits ---------------------------------------------------------------
 
@@ -708,19 +747,32 @@ function renderStats() {
   ctrl = { key(e) { if (e.key === 'Escape') { location.hash = ''; return true; } return false; } };
 }
 
-route();
+// --- boot -----------------------------------------------------------------------
+// Wait for the initial auth state before first paint so signed-in users
+// never flash the gate, and signed-out users hit the gate immediately.
 
-// Cloud sync boot: on sign-in, cloud+local saves merge and re-render.
-initCloud(
-  () => save,
-  (merged) => {
-    save = merged;
-    persist(save);
-    route();
+onCloudChange((cs) => {
+  if (cs.email) {
+    try { localStorage.removeItem(GUEST_KEY); } catch { /* fine */ }
   }
-);
-onCloudChange(() => {
-  // refresh the sync badge only when sitting on the home screen
-  const hash = location.hash.slice(1);
-  if (!hash) renderHome();
+  const onHome = !location.hash.slice(1);
+  const onGate = !!app.querySelector('.auth-gate');
+  if (onHome || onGate) route();
 });
+
+async function boot() {
+  if (cloudConfigured()) {
+    app.innerHTML = '<div class="splash">📖</div>';
+    await initCloud(
+      () => save,
+      (merged) => {
+        save = merged;
+        persist(save);
+        route();
+      }
+    );
+  }
+  route();
+}
+
+boot();

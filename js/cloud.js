@@ -29,7 +29,9 @@ function emit() {
 }
 
 // getSave() returns the current in-memory save; setSave(merged) replaces it
-// (and persists + re-renders). Called once at boot.
+// (and persists + re-renders). Called once at boot; resolves once the
+// initial session state is known (so the app can decide gate vs home
+// without flashing the wrong screen).
 export async function initCloud(getSave, setSave) {
   if (!cloudConfigured()) return;
   const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
@@ -37,29 +39,41 @@ export async function initCloud(getSave, setSave) {
   status = 'out';
   emit();
 
-  client.auth.onAuthStateChange(async (_event, session) => {
-    const wasUser = user;
+  let resolveReady;
+  const ready = new Promise((r) => { resolveReady = r; });
+
+  client.auth.onAuthStateChange((_event, session) => {
+    const wasId = user ? user.id : null;
     user = session ? session.user : null;
-    if (user && (!wasUser || wasUser.id !== user.id)) {
-      // fresh sign-in: pull cloud save, merge with local, push the union back
+    if (user && wasId !== user.id) {
       status = 'syncing';
       emit();
-      try {
-        const { data, error } = await client
-          .from('grimoire_saves').select('data').eq('user_id', user.id).maybeSingle();
-        if (error) throw error;
-        const merged = data && data.data ? mergeSaves(getSave(), data.data) : getSave();
-        setSave(merged);
-        await pushNow(merged);
-      } catch {
-        status = 'error';
-        emit();
-      }
+      // supabase calls inside this callback can deadlock — defer them
+      setTimeout(() => pullMergePush(getSave, setSave), 0);
     } else if (!user) {
       status = 'out';
       emit();
     }
+    if (resolveReady) { resolveReady(); resolveReady = null; }
   });
+
+  await ready; // initial session restored (or confirmed absent)
+}
+
+// Sign-in (or fresh boot with a session): pull cloud save, merge with
+// local so neither device loses progress, push the union back up.
+async function pullMergePush(getSave, setSave) {
+  try {
+    const { data, error } = await client
+      .from('grimoire_saves').select('data').eq('user_id', user.id).maybeSingle();
+    if (error) throw error;
+    const merged = data && data.data ? mergeSaves(getSave(), data.data) : getSave();
+    setSave(merged);
+    await pushNow(merged);
+  } catch {
+    status = 'error';
+    emit();
+  }
 }
 
 export function signIn(provider) {

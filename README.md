@@ -69,7 +69,7 @@ Or deploy to GitHub Pages — it's a static site; the included workflow tests an
 
 ## Cloud sync (Google / GitHub sign-in)
 
-Progress lives in localStorage by default. With Supabase configured, signing in syncs it across devices: on login the cloud and local saves are **merged** (per-card, most-recently-reviewed wins; learned/solved union), and every change debounce-pushes back up. All access is guarded by Row-Level Security — each user can only touch their own row.
+With Supabase configured, the app is **auth-first**: the front door is a sign-in gate (Google / GitHub), so your stats belong to your account from the first rep — with a "continue as guest" escape hatch for device-local play. On sign-in the cloud and local saves are **merged** (per-card, most-recently-reviewed wins; learned/solved union), and every change debounce-pushes back up. All access is guarded by Row-Level Security — each user can only touch their own row. Without a configured key the gate is skipped and progress lives in localStorage.
 
 Setup (one time):
 1. Apply `supabase/schema.sql` to your Supabase project (SQL editor or psql) — creates `grimoire_saves` + RLS policies.
