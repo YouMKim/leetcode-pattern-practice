@@ -6,4 +6,4 @@
 // While it is empty, the game runs in local-only mode (localStorage).
 
 export const SUPABASE_URL = 'https://xkgnqnviaoysmicqywkf.supabase.co';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_ANON_KEY = 'sb_publishable__fxmUrOO01WPCQVzLhsTQA_d4NrQSCI';
