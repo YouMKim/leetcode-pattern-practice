@@ -159,4 +159,66 @@ export const PYTHON_TRICKS = [
       { title: 'Excel Sheet Column Title', diff: 'E', slug: 'excel-sheet-column-title' },
     ],
   },
+  {
+    id: 'python/min-max-key',
+    name: 'min/max with key (argmax)',
+    when: 'The most frequent / closest / longest item — argmax in one call, no sort',
+    code: [
+      'most_common = max(freq, key={{freq.get}})    # argmax over a dict',
+      'closest = min(points, key=lambda p: {{p[0]**2 + p[1]**2}})',
+      'longest = max(words, key={{len}})',
+      'smallest_pair = min(pairs)                  # tuples compare lexicographically',
+    ],
+    bigO: { time: 'O(n) — beats sorting for a single winner', space: 'O(1)' },
+    gotchas: [
+      'max(d) maxes the KEYS; max(d, key=d.get) maxes by VALUE — huge difference',
+      'One winner? min/max with key. Top k? heapq.nlargest. Everything? sort.',
+      'Ties: returns the FIRST winner encountered',
+    ],
+    quiz: [
+      {
+        q: "freq = {'a': 3, 'z': 1}; max(freq) returns…",
+        options: ["'a'", "'z'", '3', "('z', 1)"],
+        answer: 1,
+        why: "Plain max iterates the KEYS — 'z' > 'a'. You wanted key=freq.get.",
+      },
+    ],
+    problems: [
+      { title: 'Top K Frequent Elements', diff: 'M', slug: 'top-k-frequent-elements' },
+      { title: 'Sort Characters By Frequency', diff: 'M', slug: 'sort-characters-by-frequency' },
+      { title: 'Majority Element', diff: 'E', slug: 'majority-element' },
+    ],
+  },
+  {
+    id: 'python/circular-mod',
+    name: 'Negative-safe % for circular arrays',
+    when: 'Wrap around array ends — Python’s % is always non-negative, unlike C/Java',
+    code: [
+      'prev = (i - 1) {{% n}}               # -1 % n == n-1 in Python!',
+      'nxt = (i + 1) % n',
+      '# circular scan: walk the array twice, index by mod',
+      'for k in range({{2 * n}}):',
+      '    i = k % n',
+      '    ...',
+    ],
+    bigO: { time: 'O(1) per wrap', space: 'O(1)' },
+    gotchas: [
+      'Python: -1 % 5 == 4 (non-negative). C/Java: -1 % 5 == -1 — port carefully',
+      'The 2n scan handles "circular next greater element" with the plain monotonic stack',
+      'Rotating by k: index (i + k) % n, or slice tricks nums[-k:] + nums[:-k]',
+    ],
+    quiz: [
+      {
+        q: 'In Python, (-1) % 5 evaluates to…',
+        options: ['-1', '4', '1', 'ValueError'],
+        answer: 1,
+        why: 'Python’s modulo takes the sign of the DIVISOR — perfect for circular indexing.',
+      },
+    ],
+    problems: [
+      { title: 'Next Greater Element II', diff: 'M', slug: 'next-greater-element-ii' },
+      { title: 'Rotate Array', diff: 'M', slug: 'rotate-array' },
+      { title: 'Gas Station', diff: 'M', slug: 'gas-station' },
+    ],
+  },
 ];

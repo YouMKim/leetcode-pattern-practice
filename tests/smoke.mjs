@@ -201,7 +201,7 @@ function approx(actual, expected, tol, label) {
   for (const e of errs) console.error(`  content: ${e}`);
   eq(errs.length, 0, 'content passes schema validation');
   eq(WORLDS.length, 20, 'content has 20 worlds');
-  eq(ALL_TRICKS.length, 119, 'content has 119 tricks');
+  eq(ALL_TRICKS.length, 130, 'content has 130 tricks');
   ok(WORLDS.every((w) => w.tricks.length >= 5), 'content ≥5 tricks per world');
 
   // every trick supports cloze + full-type + match, and rotation never crashes

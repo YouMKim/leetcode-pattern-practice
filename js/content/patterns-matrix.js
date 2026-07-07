@@ -188,4 +188,37 @@ export const MATRIX_TRICKS = [
       { title: 'Rotting Oranges', diff: 'M', slug: 'rotting-oranges' },
     ],
   },
+  {
+    id: 'matrix/direction-vectors',
+    name: 'Direction vectors & turning',
+    when: 'Robots, spirals, ray-walking — face a direction, step, and turn with arithmetic',
+    code: [
+      'DIRS = [(-1, 0), (0, 1), (1, 0), (0, -1)]   # N E S W — CLOCKWISE order',
+      'd = 0                                        # facing north',
+      'dr, dc = DIRS[d]',
+      'r, c = r + dr, c + dc                        # step forward',
+      'd = (d + 1) {{% 4}}                           # turn right = next clockwise',
+      'd = (d - 1) % 4                              # turn left (Python % stays ≥ 0)',
+      'dr, dc = dc, {{-dr}}                          # rotate a raw vector right',
+    ],
+    bigO: { time: 'O(1) per step/turn', space: 'O(1)' },
+    gotchas: [
+      'List the DIRS clockwise so ±1 mod 4 means right/left — order is the whole trick',
+      'Vector rotation: right is (dr,dc)→(dc,−dr); left is (−dc,dr) — check with north',
+      'Robot-returns-to-origin: after 4 identical instruction loops it always cycles',
+    ],
+    quiz: [
+      {
+        q: 'Facing north (−1,0), a right turn via (dr,dc)→(dc,−dr) gives…',
+        options: ['(0, 1) — east', '(1, 0) — south', '(0, −1) — west', '(−1, 0) — north'],
+        answer: 0,
+        why: '(−1,0) → (0, 1): north to east — clockwise, as a right turn should be.',
+      },
+    ],
+    problems: [
+      { title: 'Spiral Matrix II', diff: 'M', slug: 'spiral-matrix-ii' },
+      { title: 'Walking Robot Simulation', diff: 'M', slug: 'walking-robot-simulation' },
+      { title: 'Robot Bounded In Circle', diff: 'M', slug: 'robot-bounded-in-circle' },
+    ],
+  },
 ];

@@ -2,7 +2,7 @@
 
 A browser game that burns **every useful LeetCode trick** into your memory with real spaced repetition — the sequel to [terminal-skills-game](https://github.com/YouMKim/terminal-skills-game).
 
-**119 tricks · 20 worlds · 5 exercise types · FSRS scheduling · ~400 curated problem links.** All Python, all offline, zero dependencies. The trick taxonomy is cross-checked against the standard pattern lists (the "41 patterns" guides, [seanprashad.com/leetcode-patterns](https://seanprashad.com/leetcode-patterns/), Grokking-style pattern courses).
+**130 tricks · 20 worlds · 5 exercise types · FSRS scheduling · ~430 curated problem links.** All Python, all offline, zero dependencies. The trick taxonomy is cross-checked against the standard pattern lists (the "41 patterns" guides, [seanprashad.com/leetcode-patterns](https://seanprashad.com/leetcode-patterns/), Grokking-style pattern courses).
 
 ## How it works
 
@@ -29,28 +29,28 @@ Progress lives in localStorage (with JSON export/import for backup). Problem che
 | 🔤 Strings | ''.join · 26-slot counts · two-pointer palindrome · split/strip · list(s) mutation · **expand around center** · rolling hash |
 | 🥞 Stack & Deque | list-as-stack · matched pairs · **monotonic stack** · deque · min-stack · **monotonic deque (window max)** · nested decode |
 | ⛰️ Heaps | heapq · max-heap negation · size-k top-k · tuple priorities · two-heaps median · **k-way merge** · lazy deletion |
-| ⚗️ Python Power-ups | itertools · cmp_to_key · SortedList · zip(*m) transpose · inf/divmod idioms |
+| ⚗️ Python Power-ups | itertools · cmp_to_key · SortedList · zip(*m) transpose · inf/divmod idioms · min/max with key · negative-safe % |
 
 **The Patterns (algorithms):**
 | World | Tricks |
 |---|---|
-| 🤏 Two Pointers & Windows | opposite ends · fast/slow · fixed window · shrinking window · reader/writer · Dutch flag |
+| 🤏 Two Pointers & Windows | opposite ends · fast/slow · fixed window · shrinking window · reader/writer · Dutch flag · exactly-K = atMost(K)−atMost(K−1) |
 | 🎯 Binary Search | classic · leftmost · **search on the answer** · rotated arrays · bisect · flat-2D indexing |
-| 🌳 Trees: DFS & BFS | recursive DFS · **iterative DFS** · BFS levels · grid flood fill · BST bounds · LCA |
+| 🌳 Trees: DFS & BFS | recursive DFS · **iterative DFS** · BFS levels · grid flood fill · BST bounds · LCA · global-vs-return · build from traversals |
 | 🔁 Recursive ⇄ Iterative | **inorder left-spine stack** · postorder via reversed preorder · the (node, expanded) frames recipe · graph DFS both ways · stack⇄queue flips DFS⇄BFS |
-| 🕸️ Graphs | adjacency · BFS shortest path · **union-find** · toposort · Dijkstra · multi-source BFS · clone-with-map |
+| 🕸️ Graphs | adjacency · BFS shortest path · **union-find** · toposort · Dijkstra · multi-source BFS · clone-with-map · bipartite coloring · MST (Prim/Kruskal) · Bellman-Ford |
 | 🔙 Backtracking | choose/explore/un-choose · subsets · permutations · start-index · sort+skip dedupe · N-queens sets |
 | 🧮 Dynamic Programming | @cache · rolling 1-D · 2-D grid · knapsack loop order · LIS n log n · state machine · min-coins |
 | ⚡ Intervals, Greedy & Bits | merge · sweep line · Kadane · XOR · n&(n−1) · **difference array** · furthest reach |
 | 🔗 Linked Lists | dummy head · in-place reversal · Floyd's cycle entry · sorted merge · runner pointer |
 | 🌲 Tries | TrieNode template · nested-dict trie · prefix search · wildcard DFS · board+trie pruning |
-| 🧊 Matrix & Simulation | spiral bounds · rotate=transpose+flip · coordinate keys · in-place flags · state encoding |
+| 🧊 Matrix & Simulation | spiral bounds · rotate=transpose+flip · coordinate keys · in-place flags · state encoding · direction vectors & turning |
 
 **The Vault (deeper cuts):**
 | World | Tricks |
 |---|---|
 | 🃏 Sorting & Selection | **quickselect** · bucket sort · counting sort · merge-from-the-back · merge sort on lists |
-| 🎲 Math & Number Theory | Boyer-Moore vote · fast power · Euclid gcd · sieve · modular habits |
+| 🎲 Math & Number Theory | Boyer-Moore vote · fast power · Euclid gcd · sieve · modular habits · carry loop · Fisher-Yates & reservoir |
 | 🧰 Design & Structures | LRU (OrderedDict) · O(1) swap-pop delete · tree serialization · length-prefix encoding · time-window deque |
 
 ## Play
